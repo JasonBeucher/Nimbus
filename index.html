@@ -1,0 +1,2336 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nimbus</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b1020;
+    --bg-2: #121a33;
+    --card: #1a2340;
+    --text: #f2f4fa;
+    --muted: #a7b0c8;
+    --accent: #7cc4ff;
+    /* Disney+ spacing: same gutters and 20px gaps at each breakpoint. */
+    --gutter: 71px;
+    --gap: 20px;
+    --radius: 10px;
+  }
+  @media (max-width: 1439px) { :root { --gutter: 58px; } }
+  @media (max-width: 1023px) { :root { --gutter: 56px; } }
+  @media (max-width: 767px) { :root { --gutter: 20px; --gap: 12px; --radius: 8px; } }
+  * { box-sizing: border-box; }
+  html { background: var(--bg); }
+  body {
+    margin: 0; min-height: 100vh; color: var(--text);
+    font: 15px/1.4 Figtree, system-ui, sans-serif;
+    background: linear-gradient(var(--bg-2), var(--bg) 600px);
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; text-decoration: none; }
+  button { font: inherit; color: inherit; }
+  :focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; border-radius: var(--radius); }
+
+  /* Nav */
+  header {
+    position: fixed; inset: 0 0 auto; z-index: 20; height: 72px;
+    display: flex; align-items: center; gap: clamp(16px, 3vw, 40px); padding: 0 var(--gutter);
+    background: linear-gradient(var(--bg) 0%, transparent 100%);
+    transition: background .3s;
+  }
+  header.solid { background: rgba(11, 16, 32, .92); backdrop-filter: blur(12px); }
+  .brand, .slide h2, .row h3 { font-family: "Bricolage Grotesque", Figtree, sans-serif; }
+  .brand { font-weight: 800; font-size: 22px; letter-spacing: .02em; display: flex; align-items: center; gap: 8px; }
+  .brand svg { color: var(--accent); }
+  nav { display: flex; gap: clamp(12px, 2.5vw, 32px); }
+  nav a {
+    display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600;
+    letter-spacing: .12em; text-transform: uppercase; color: var(--muted); padding: 6px 0;
+    border-bottom: 2px solid transparent; transition: color .2s, border-color .2s;
+  }
+  nav a:hover, nav a[aria-current="page"] { color: var(--text); border-color: var(--text); }
+  .avatar {
+    flex: none; margin-left: auto; width: 36px; height: 36px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), #6b5bff); display: grid; place-items: center; font-weight: 700;
+  }
+  @media (max-width: 720px) { nav a span { display: none; } .brand span { display: none; } }
+
+  main { padding-top: 88px; padding-bottom: 64px; }
+
+  /* Hero: 3:1 banner, the neighbours peek into the gutters */
+  .hero { position: relative; margin-bottom: 28px; overflow: hidden; }
+  .hero-track {
+    --i: 0; display: flex; gap: var(--gap); padding: 0 var(--gutter);
+    transform: translateX(calc(var(--i) * (2 * var(--gutter) - 100% - var(--gap))));
+    transition: transform .6s ease;
+  }
+  .slide {
+    position: relative; flex: 0 0 100%; aspect-ratio: 3 / 1; border-radius: 12px; overflow: hidden; background: var(--card);
+    opacity: .5; transition: opacity .6s ease;
+  }
+  .slide.active { opacity: 1; }
+  .slide img.bg { width: 100%; height: 100%; object-fit: cover; object-position: center 20%; }
+  .slide::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(90deg, rgba(11,16,32,.92) 0%, rgba(11,16,32,.55) 35%, transparent 65%);
+  }
+  .slide .info {
+    position: absolute; z-index: 1; left: clamp(20px, 4vw, 64px); bottom: clamp(20px, 3vw, 48px);
+    width: min(42%, 520px); display: flex; flex-direction: column; gap: 14px;
+  }
+  .slide .logo { max-width: 100%; max-height: clamp(56px, 8vw, 140px); object-fit: contain; object-position: left bottom; align-self: flex-start; }
+  .slide h2 { margin: 0; font-size: clamp(24px, 3.4vw, 48px); line-height: 1.05; }
+  .slide p { margin: 0; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .meta { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--muted); }
+  .badge { border: 1px solid currentColor; border-radius: 4px; padding: 1px 6px; font-size: 11px; font-weight: 600; }
+  .btn {
+    align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; padding: 12px 22px;
+    background: var(--text); color: var(--bg); border-radius: 6px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; font-size: 13px;
+  }
+  .btn:hover { background: #fff; }
+  button.btn { border: 0; cursor: pointer; font-family: inherit; }
+  .btn:disabled { opacity: .6; cursor: default; }
+  .hero-arrow {
+    position: absolute; top: 0; bottom: 30px; width: var(--gutter); z-index: 2; border: 0; background: none; cursor: pointer;
+    display: grid; place-items: center; opacity: .6;
+  }
+  .hero-arrow:hover { opacity: 1; }
+  .hero-arrow.prev { left: 0; } .hero-arrow.next { right: 0; }
+  .dots { display: flex; justify-content: center; gap: 6px; margin-top: 16px; }
+  .dots button { width: 8px; height: 8px; border-radius: 50%; border: 0; padding: 0; background: rgba(255,255,255,.35); cursor: pointer; }
+  .dots button[aria-selected="true"] { background: var(--text); width: 20px; border-radius: 4px; }
+  @media (max-width: 1023px) { .slide p { display: none; } }
+  @media (max-width: 767px) {
+    .slide { aspect-ratio: 16 / 9; border-radius: 10px; }
+    .slide::after { background: linear-gradient(0deg, rgba(11,16,32,.95) 10%, transparent 70%); }
+    .slide .info { width: auto; left: 16px; right: 16px; bottom: 16px; gap: 10px; }
+    .slide .meta { display: none; }
+    .btn { padding: 9px 16px; font-size: 12px; }
+  }
+
+  /* Shelves: cards per screen as on Disney+ (large = picks, recent, continue; poster = genres) */
+  .row { --pad-y: calc(10px + .8vw); /* shelf padding: hover overflow = 2.5% of card height (~.75vw for large posters) + 6px ring */
+    margin-bottom: clamp(24px, 3vw, 40px); position: relative; overflow-x: clip; } /* arrows are wider than a 20px gutter */
+  .row h3 { margin: 0 var(--gutter) 4px; font-size: 22px; font-weight: 500; }
+  .shelf {
+    --n: 6; display: flex; gap: var(--gap); align-items: flex-start;
+    --slot: calc((100% - (var(--n) - 1) * var(--gap)) / var(--n)); /* 100% = width inside the gutters */
+    overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; /* rows only scroll sideways */ scroll-padding: 0 var(--gutter);
+    padding: var(--pad-y) var(--gutter) calc(var(--pad-y) + 4px); scrollbar-width: none;
+  }
+  .shelf::-webkit-scrollbar { display: none; }
+  /* Flex (not grid) so a hovered poster's slot can widen and push its neighbours, as on Prime Video.
+     flex-basis is a layout animation on purpose: pushing the row is the effect; only that row reflows. */
+  .shelf > * { flex: 0 0 var(--slot); min-width: 0; scroll-snap-align: start; transition: flex-basis .55s cubic-bezier(.4,0,.2,1); }
+  /* A poster that is itself the slot: its own .card transition would drop the widening, so list everything here. */
+  .shelf > .card { transition: flex-basis .55s cubic-bezier(.4,0,.2,1), transform .25s ease, box-shadow .25s ease, outline-color .25s; }
+  .card.peeking { aspect-ratio: auto !important; transform: none !important; }
+  .shelf.large, .shelf.continue, .shelf.wide { --n: 5; }
+  @media (max-width: 1439px) { .shelf { --n: 5; } .shelf.large, .shelf.continue, .shelf.wide { --n: 4; } }
+  @media (max-width: 1023px) { .shelf { --n: 4; } .shelf.large, .shelf.continue, .shelf.wide { --n: 3; } .row h3 { font-size: 20px; } }
+  @media (max-width: 767px) { .shelf { --n: 3.2; } .shelf.large { --n: 2.2; } .shelf.continue, .shelf.wide { --n: 1.6; } .row h3 { font-size: 17px; } }
+  .row-arrow {
+    position: absolute; top: calc(35px + var(--pad-y)); bottom: calc(var(--pad-y) + 4px); width: var(--gutter); z-index: 3; border: 0; cursor: pointer;
+    background: rgba(11,16,32,.6); display: grid; place-items: center; opacity: 0; transition: opacity .2s;
+  }
+  .row:hover .row-arrow:not([disabled]) { opacity: 1; }
+  .row-arrow.prev { left: 0; } .row-arrow.next { right: 0; }
+  @media (hover: none) { .row-arrow { display: none; } }
+
+  .card {
+    position: relative; display: block; border-radius: var(--radius); overflow: hidden; background: var(--card);
+    box-shadow: 0 8px 20px rgba(0,0,0,.35); transition: transform .25s ease, box-shadow .25s ease, outline-color .25s;
+    outline: 3px solid transparent; outline-offset: 3px; /* Disney+ ring: white border with a gap around the art */
+  }
+  .card:hover, .card:focus-visible { transform: scale(1.05); box-shadow: 0 18px 36px rgba(0,0,0,.6); outline-color: rgba(249,249,249,.85); }
+  .card img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .poster .card, .large .card, .discover .card { aspect-ratio: 2 / 3; }
+  button.card { width: 100%; padding: 0; border: 0; cursor: pointer; font: inherit; color: inherit; }
+  .chip { position: absolute; top: 8px; left: 8px; z-index: 1; padding: 2px 8px; border-radius: 4px; background: #f9f9f9; color: #0b1020; font-size: 11px; font-weight: 700; }
+  .continue .card, .wide .card { aspect-ratio: 16 / 9; }
+  .fallback { position: absolute; inset: 0; display: grid; place-items: center; padding: 12px; text-align: center; font-weight: 600; color: var(--muted); }
+  /* Only for art without a title on it: logo (or name) laid over it, always visible. */
+  .tag {
+    position: absolute; inset: auto 0 0; z-index: 1; display: flex; align-items: flex-end; padding: 32px 12px 18px;
+    background: linear-gradient(transparent, rgba(0,0,0,.75)); font-weight: 700; font-size: 15px;
+  }
+  .card .tag img { width: auto; height: auto; max-width: 70%; max-height: 48px; object-fit: contain; }
+  .progress { position: absolute; left: 10px; right: 10px; bottom: 8px; height: 4px; border-radius: 2px; background: rgba(255,255,255,.3); z-index: 1; }
+  .progress i { display: block; height: 100%; border-radius: inherit; background: var(--text); }
+  .play {
+    position: absolute; inset: 0; z-index: 1; display: grid; place-items: center; opacity: 0; transition: opacity .25s;
+    background: rgba(0,0,0,.25);
+  }
+  .card:hover .play, .card:focus-visible .play { opacity: 1; }
+  .cw-meta { padding: 10px 2px 0; font-size: 13px; }
+  .cw-meta .left { color: var(--muted); font-size: 12px; }
+  .cw-meta .t { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cw-meta .s { color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cw-meta .t2 { font-size: 15px; font-weight: 700; line-height: 1.3; margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .cw-meta .badge { font-size: 10px; padding: 0 4px; margin-right: 6px; }
+
+  /* Search */
+  /* Search, as on Disney+: big underlined field, then titled landscape cards (same counts as large rows) */
+  .search-box {
+    position: relative; display: flex; align-items: center; margin: 0 var(--gutter) 24px; padding-bottom: 12px;
+    border-bottom: 3px solid rgba(255,255,255,.5); transition: border-color .2s;
+  }
+  .search-box:focus-within { border-color: var(--text); }
+  .search-box > svg { position: absolute; left: 2px; color: var(--muted); }
+  .search-box input {
+    flex: 1; min-width: 0; padding: 4px 48px; border: 0; background: none; outline: none; color: var(--text);
+    font: 700 clamp(22px, 2.3vw, 32px)/1.2 Figtree, system-ui, sans-serif;
+  }
+  .search-box input::placeholder { color: rgba(242,244,250,.55); }
+  .search-box input::-webkit-search-cancel-button { display: none; }
+  .search-box .clear { position: absolute; right: 0; padding: 6px; border: 0; background: none; cursor: pointer; display: grid; border-radius: 50%; }
+  .search-box .clear:hover { background: rgba(255,255,255,.12); }
+  .search-box .clear[hidden] { display: none; }
+  .grid { --n: 5; display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); gap: 24px var(--gap); padding: 10px var(--gutter) 0; }
+  @media (max-width: 1439px) { .grid { --n: 4; } }
+  @media (max-width: 1023px) { .grid { --n: 3; } }
+  @media (max-width: 767px) { .grid { --n: 2; } }
+  .grid.discover { --n: 6; }
+  .grid.discover, .grid.poster, .grid.large, .grid.top10 { position: relative; overflow-x: clip; }
+  .grid > a.card, .grid > a.t10 {
+    transition: translate .55s cubic-bezier(.4,0,.2,1), transform .25s ease, box-shadow .25s ease, outline-color .25s;
+  }
+  @media (max-width: 1439px) { .grid.discover { --n: 5; } }
+  @media (max-width: 1023px) { .grid.discover { --n: 4; } }
+  @media (max-width: 767px) { .grid.discover { --n: 3; } }
+  /* Hover preview on vertical cards (opened by openPeek) */
+  .peek {
+    /* Laid out once at full size; the visible area grows from the poster (clip-path), so nothing re-wraps mid-animation. */
+    position: fixed; z-index: 15; overflow: hidden; border-radius: var(--radius); background: var(--bg-2); cursor: pointer;
+    transition: clip-path .55s cubic-bezier(.4,0,.2,1), opacity .15s;
+  }
+  .peek::before { content: ""; position: absolute; inset: 0; z-index: 2; border: 3px solid rgba(249,249,249,.85); border-radius: inherit; pointer-events: none; }
+  .peek[hidden] { display: none; }
+  .peek:not(.open) { opacity: 0; }
+  .peek > img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+  .peek-poster { transition: opacity .35s .05s; }
+  .peek.open.has-art .peek-poster { opacity: 0; }
+  .peek::after {
+    content: ""; position: absolute; inset: 0; opacity: 0; transition: opacity .3s .15s;
+    background: linear-gradient(0deg, rgba(11,16,32,.96) 0%, rgba(11,16,32,.7) 40%, transparent 72%), linear-gradient(90deg, rgba(11,16,32,.55), transparent 60%);
+  }
+  .peek.open::after { opacity: 1; }
+  .peek-info {
+    position: absolute; z-index: 1; left: 0; right: 0; bottom: 0; padding: 0 20px 18px; display: flex; flex-direction: column; align-items: flex-start; gap: 10px;
+    opacity: 0; transform: translateY(8px); transition: opacity .3s .2s, transform .3s .2s;
+  }
+  .peek.open .peek-info { opacity: 1; transform: none; }
+  .peek-logo { max-width: 55%; max-height: 64px; object-fit: contain; object-position: left bottom; }
+  .peek-title { font: 800 22px/1.1 "Bricolage Grotesque", Figtree, sans-serif; }
+  .peek-actions { display: flex; align-items: center; gap: 10px; }
+  .peek .btn { padding: 9px 18px; font-size: 13px; border-radius: 6px; }
+  .peek .round { width: 38px; height: 38px; }
+  .peek-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 12px; color: #dbdcde; }
+  .chip-inline { padding: 1px 6px; border-radius: 4px; background: #f9f9f9; color: #0b1020; font-size: 11px; font-weight: 700; }
+  .peek p { margin: 0; font-size: 13px; line-height: 1.45; color: #c3c8d6; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .peek.compact .peek-info { gap: 8px; padding: 0 14px 12px; }
+  .peek.compact p { display: none; }
+  .peek.compact .peek-logo { max-height: 44px; }
+
+  /* Découvrir home: filter bar, banner, rows (top 10 with big outlined ranks, as on streaming services) */
+  .see-all { margin-left: 14px; font-size: 13px; font-weight: 600; letter-spacing: .04em; color: var(--muted); white-space: nowrap; }
+  .see-all::after { content: " ›"; }
+  .see-all:hover { color: var(--text); }
+  .shelf.top10 { --n: 5; }
+  @media (max-width: 1439px) { .shelf.top10 { --n: 4; } }
+  @media (max-width: 1023px) { .shelf.top10 { --n: 3; } }
+  @media (max-width: 767px) { .shelf.top10 { --n: 1.7; } }
+  .t10 { display: flex; align-items: flex-end; }
+  /* Digits sized from the slot width (same formula as the shelf columns), sitting on the poster's bottom edge.
+     No container query here: it would make each slot its own layer and a wide "8" or "10" would draw over the previous poster. */
+  .t10 .rank {
+    position: relative; z-index: 0; flex: 0 0 44%; min-width: 0; margin: 0 -9% -.034em 0; /* puts the digits' baseline on the poster's bottom edge */ text-align: right; white-space: nowrap; direction: rtl;
+    font: 800 calc((100vw - 2 * var(--gutter) - (var(--n) - 1) * var(--gap)) / var(--n) * 1.05)/.74 "Bricolage Grotesque", Figtree, sans-serif; letter-spacing: -.1em;
+    color: var(--bg); -webkit-text-stroke: 3px rgba(242,244,250,.8); paint-order: stroke; user-select: none;
+  }
+  .t10 .card { flex: 1; min-width: 0; aspect-ratio: 2 / 3; z-index: 1; }
+  .t10:hover .card, .t10:focus-visible .card { transform: scale(1.05); box-shadow: 0 18px 36px rgba(0,0,0,.6); }
+  .t10:hover .card::before, .t10:focus-visible .card::before { border-color: rgba(249,249,249,.85); }
+  .t10:focus-visible { outline: none; }
+  .search-pill {
+    display: flex; align-items: center; gap: 8px; margin-left: auto; width: min(340px, 100%); height: 42px; padding: 0 8px 0 14px;
+    border-radius: 999px; background: #2d2f36; color: var(--muted);
+  }
+  .search-pill:focus-within { box-shadow: inset 0 0 0 2px var(--text); }
+  .search-pill input { flex: 1; min-width: 0; border: 0; background: none; outline: none; color: var(--text); font: 15px Figtree, sans-serif; }
+  .search-pill input::-webkit-search-cancel-button { display: none; }
+  .search-pill .clear { padding: 4px; border: 0; background: none; cursor: pointer; display: grid; border-radius: 50%; }
+  .search-pill .clear[hidden] { display: none; }
+  .back-link { font-size: 18px; font-weight: 700; }
+  .back-link::before { content: "‹ "; }
+  @media (max-width: 767px) { .search-pill { margin-left: 0; width: 100%; } }
+
+  /* Découvrir: Tout/Films/Séries switch, list chips, genre picker, endless poster grid */
+  .filters[hidden] { display: none; }
+  .filters { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; margin: 0 var(--gutter) 24px; }
+  .seg { display: inline-flex; padding: 4px; border-radius: 999px; background: #2d2f36; }
+  .seg button, .chips button { border: 0; cursor: pointer; font: 600 14px Figtree, sans-serif; border-radius: 999px; }
+  .seg button { padding: 8px 18px; background: none; color: #dbdcde; }
+  .seg button[aria-pressed="true"] { background: var(--text); color: var(--bg); }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chips button { padding: 7px 16px; background: none; color: var(--text); box-shadow: inset 0 0 0 1px rgba(255,255,255,.3); font-weight: 500; }
+  .chips button:hover { box-shadow: inset 0 0 0 1px var(--text); }
+  .chips button[aria-pressed="true"] { background: rgba(255,255,255,.16); box-shadow: inset 0 0 0 2px var(--text); font-weight: 700; }
+  .chips button:disabled { opacity: .35; cursor: default; }
+  .filters .season-select { margin: 0; }
+  .more { height: 1px; }
+  .grid-title { margin: 40px var(--gutter) 0; font-size: 22px; font-weight: 500; }
+  .grid-title small { display: block; margin-top: 2px; font-size: 13px; color: var(--muted); font-weight: 400; }
+
+  /* Detail page, as on Disney+: backdrop behind the header, logo, facts, actions, then tabs */
+  .detail { position: relative; isolation: isolate; margin-top: -88px; padding-top: 120px; }
+  .detail-bg { position: absolute; inset: 0 0 auto; z-index: -1; aspect-ratio: 16 / 9; max-height: 100vh; width: 100%; overflow: hidden; }
+  .detail-bg img { width: 100%; height: 100%; object-fit: cover; object-position: center top; }
+  .detail-bg::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(90deg, var(--bg) 0%, rgba(11,16,32,.75) 30%, rgba(11,16,32,.1) 65%), linear-gradient(0deg, var(--bg) 0%, rgba(11,16,32,.4) 35%, transparent 60%);
+  }
+  .detail-head { padding: 0 var(--gutter); display: flex; flex-direction: column; align-items: flex-start; }
+  .detail-logo { max-width: min(400px, 70%); max-height: 118px; object-fit: contain; object-position: left bottom; }
+  .detail-head h1 { margin: 0; font: 800 clamp(30px, 4vw, 56px)/1.05 "Bricolage Grotesque", Figtree, sans-serif; max-width: 640px; }
+  .detail-head .meta { margin-top: 40px; font-size: 13px; color: #dbdcde; }
+  .detail-sum { margin: 24px 0 0; max-width: 550px; font-size: 20px; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .detail-progress { margin-top: 16px; width: min(550px, 100%); display: flex; align-items: center; gap: 12px; font-size: 12px; color: #dbdcde; }
+  .bar { flex: 1; height: 4px; border-radius: 2px; background: rgba(255,255,255,.3); }
+  .bar i { display: block; height: 100%; border-radius: inherit; background: var(--text); }
+  .detail-actions { margin-top: 16px; display: flex; align-items: center; flex-wrap: wrap; gap: 20px; }
+  .play-btn { height: 48px; padding: 0 32px; border-radius: 999px; gap: 10px; font-size: 15px; }
+  .watched-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 18px; border-radius: 999px; border: 2px solid rgba(255,255,255,.75); background: rgba(255,255,255,.1); color: var(--text); font: inherit; font-size: 15px; white-space: nowrap; cursor: pointer; }
+  .watched-btn:hover { background: rgba(255,255,255,.25); }
+  .watched-btn[aria-pressed="true"] { background: var(--text); color: var(--bg); }
+  .watched-btn:disabled { opacity: .6; cursor: progress; }
+  .detail-msg { margin: 12px 0 0; font-size: 13px; color: var(--muted); }
+  .detail-msg:empty { display: none; }
+  /* Downloads (Radarr/Sonarr) under the header actions: same quiet language as the "Il reste" bar, no panel. */
+  .acq { --tone: var(--accent); width: min(550px, 100%); margin-top: 24px; }
+  .acq[hidden] { display: none; }
+  .acq[data-state=ready] { --tone: #8fd9b6; }
+  .acq[data-state=blocked], .acq[data-state=unavailable] { --tone: #efc68e; }
+  .acq[data-state=paused] { --tone: var(--muted); }
+  .acq-line { display: flex; align-items: baseline; gap: 12px; }
+  .acq-label { display: inline-flex; align-items: center; gap: 9px; font-size: 15px; font-weight: 600; }
+  .acq-label::before { content: ""; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--tone); }
+  .acq-pct { margin-left: auto; font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .acq .bar { margin-top: 10px; overflow: hidden; }
+  .acq .bar i { transform-origin: left; transform: scaleX(var(--p, 0)); transition: transform .7s ease; }
+  .acq[data-indeterminate=true] .bar i { width: 30%; transform: none; animation: acq-slide 1.8s ease-in-out infinite; }
+  .acq:is([data-state=paused], [data-state=blocked], [data-state=unavailable]) .bar i { animation: none; opacity: .5; }
+  @keyframes acq-slide { from { transform: translateX(-100%); } to { transform: translateX(340%); } }
+  .acq-meta { margin-top: 8px; font-size: 12px; color: #dbdcde; font-variant-numeric: tabular-nums; }
+  .acq-meta:empty, .acq-note:empty, .acq-issues:empty, .acq-repair p:empty { display: none; }
+  .acq-note { margin: 6px 0 0; font-size: 13px; line-height: 1.5; color: var(--muted); }
+  .acq-issues { margin: 10px 0 0; padding-left: 18px; font-size: 13px; line-height: 1.5; color: #efc68e; overflow-wrap: anywhere; }
+  .acq .watched-btn { margin-top: 14px; min-height: 40px; font-size: 13px; }
+  .acq-repair { margin-top: 16px; }
+  .acq-repair[hidden], .acq-repair form[hidden], .acq [hidden] { display: none; }
+  .acq-repair p { margin: 0 0 10px; font-size: 13px; line-height: 1.5; color: var(--muted); }
+  .acq-repair fieldset { margin: 0; padding: 0; border: 0; min-width: 0; }
+  .acq-repair legend { margin-bottom: 4px; font-size: 13px; font-weight: 600; }
+  .pick { display: flex; align-items: flex-start; gap: 12px; margin-top: 8px; padding: 12px 14px; border-radius: 10px; background: rgba(255,255,255,.06); cursor: pointer; }
+  .pick:has(input:checked) { box-shadow: inset 0 0 0 2px var(--text); }
+  .pick:has(input:disabled) { cursor: default; opacity: .7; }
+  .pick input { flex: none; margin-top: 3px; accent-color: var(--text); }
+  .pick span { min-width: 0; font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
+  .pick small { display: block; margin-top: 2px; font-size: 12px; color: var(--muted); }
+  .pick .warn { color: #efc68e; }
+
+  /* "Versions" tab: what the indexers offer for this film, as a plain list like the episodes. */
+  .versions { padding: 0 var(--gutter); max-width: calc(1040px + 2 * var(--gutter)); }
+  .versions-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 16px 32px; }
+  .versions-head h3 { margin: 0; font-size: 22px; font-weight: 500; }
+  .versions-status { margin: 6px 0 0; max-width: 640px; font-size: 14px; line-height: 1.5; color: var(--muted); }
+  .versions .chips { margin-top: 20px; }
+  .versions .chips[hidden], .versions-notes[hidden], .versions-more[hidden] { display: none; }
+  .chips button span { margin-left: 8px; opacity: .7; font-variant-numeric: tabular-nums; }
+  .chips button:disabled { opacity: .35; cursor: default; }
+  .versions-notes { margin: 16px 0 0; padding-left: 18px; max-width: 760px; font-size: 13px; line-height: 1.6; color: var(--muted); overflow-wrap: anywhere; }
+  .version-list { list-style: none; margin: 16px 0 0; padding: 0; }
+  .version { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; align-items: center; gap: 6px 20px; padding: 16px 0; border-top: 1px solid rgba(255,255,255,.08); }
+  .version-res { justify-self: start; padding: 3px 8px; font-size: 13px; }
+  .version-q { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; font-size: 15px; font-weight: 600; }
+  .version-best { font-size: 12px; color: #8fd9b6; }
+  .version-meta { margin-top: 4px; font-size: 13px; color: #dbdcde; }
+  .version-name { margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: var(--muted); }
+  .version-side { display: flex; align-items: center; justify-content: flex-end; gap: 18px; }
+  .version-size { font-size: 14px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .version .watched-btn { min-height: 38px; padding: 0 16px; font-size: 13px; }
+  .version-state { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); white-space: nowrap; }
+  .version-state.ok { color: #8fd9b6; }
+  .version-state svg { width: 16px; height: 16px; }
+  .version-why { grid-column: 2 / -1; font-size: 12px; color: var(--muted); }
+  .version-why summary { width: fit-content; cursor: pointer; }
+  .version-why ul { margin: 6px 0 0; padding-left: 18px; line-height: 1.6; overflow-wrap: anywhere; }
+  .version-skel { grid-template-columns: 64px minmax(0, 1fr) 90px; }
+  .version-skel i { height: 18px; border-radius: 4px; }
+  .version-skel i:nth-child(2) { max-width: 360px; }
+  .versions-more { margin-top: 16px; }
+  .versions-msg { margin: 14px 0 0; font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
+  .versions-msg:empty, .versions-foot:empty { display: none; }
+  .versions-foot { margin: 16px 0 0; font-size: 12px; color: var(--muted); }
+  @media (max-width: 767px) {
+    .acq { margin-top: 20px; }
+    .versions-head h3 { font-size: 18px; }
+    .version { grid-template-columns: 52px minmax(0, 1fr); gap: 8px 14px; }
+    .version-side { grid-column: 2; justify-content: space-between; }
+    .version-why { grid-column: 1 / -1; }
+  }
+  .card.static:hover { transform: none; box-shadow: 0 8px 20px rgba(0,0,0,.35); }
+  .card.static:hover { outline-color: transparent; }
+  .round {
+    width: 48px; height: 48px; display: grid; place-items: center; border-radius: 50%; cursor: pointer; color: var(--text);
+    background: rgba(255,255,255,.1); border: 2px solid rgba(255,255,255,.75); transition: background .2s;
+  }
+  .round:hover { background: rgba(255,255,255,.25); }
+  .round[aria-pressed="true"] { background: var(--text); color: var(--bg); }
+  .tabs { display: flex; gap: 36px; margin: 64px var(--gutter) 24px; overflow-x: auto; scrollbar-width: none; }
+  .tabs button {
+    padding: 0 0 10px; border: 0; background: none; cursor: pointer; white-space: nowrap;
+    font-size: 20px; letter-spacing: .08em; text-transform: uppercase; color: #a7a9ae; border-bottom: 3px solid transparent;
+  }
+  .tabs button:hover { color: var(--text); }
+  .tabs button[aria-selected="true"] { color: var(--text); font-weight: 700; border-color: var(--text); }
+  .panel[hidden] { display: none; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .season-select {
+    margin: 0 var(--gutter) 8px; height: 36px; padding: 0 40px 0 16px; border: 0; border-radius: 18px; cursor: pointer;
+    font: 15px Figtree, sans-serif; color: var(--text); background: #2d2f36 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.5'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 14px center;
+    appearance: none;
+  }
+  .grid.episodes { --n: 4; }
+  @media (max-width: 1439px) { .grid.episodes { --n: 3; } }
+  @media (max-width: 1023px) { .grid.episodes { --n: 2; } }
+  @media (max-width: 599px) { .grid.episodes { --n: 1; } }
+  .episodes .card { aspect-ratio: 16 / 9; }
+  .ep-sum { margin: 6px 0; color: var(--muted); font-size: 14px; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .tiles .card { aspect-ratio: 16 / 9; }
+  .facts { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); gap: 24px 32px; padding: 0 var(--gutter); }
+  .facts h3 { margin: 0 0 16px; font-size: 24px; }
+  .facts p { margin: 0; font-size: 18px; line-height: 1.6; }
+  .facts dl { margin: 0; font-size: 15px; line-height: 1.6; }
+  .facts dt { color: #a7a9ae; }
+  .facts dd { margin: 0 0 12px; }
+  @media (max-width: 1023px) { .facts { grid-template-columns: 1fr 1fr; } .facts > div { grid-column: 1 / -1; } }
+  @media (max-width: 767px) {
+    .detail { padding-top: calc(56.25vw - 24px); }
+    .detail-bg::after { background: linear-gradient(0deg, var(--bg) 0%, rgba(11,16,32,.3) 45%, transparent 70%); }
+    .detail-logo { max-height: 72px; }
+    .detail-head .meta { margin-top: 20px; }
+    .detail-sum { font-size: 15px; margin-top: 14px; }
+    .detail-actions { gap: 12px; width: 100%; }
+    .play-btn { flex: 1; justify-content: center; }
+    .tabs { gap: 24px; margin-top: 36px; }
+    .tabs button { font-size: 15px; }
+    .facts { grid-template-columns: 1fr; }
+  }
+
+  /* Hero: the whole banner opens the detail page; the button still plays */
+  .slide-link { position: absolute; inset: 0; z-index: 1; }
+  .slide .info { z-index: 2; pointer-events: none; }
+  .slide .info .btn { pointer-events: auto; }
+
+  .genre span {
+    position: absolute; inset: 0; z-index: 1; display: grid; place-items: center; padding: 8px; text-align: center;
+    background: rgba(11,16,32,.5); font: 800 clamp(16px, 1.7vw, 24px) "Bricolage Grotesque", Figtree, sans-serif; text-shadow: 0 2px 8px rgba(0,0,0,.6);
+  }
+  .state { padding: 80px var(--gutter); text-align: center; color: var(--muted); }
+
+  /* Demande à Nimbus: a sentence sent to the AI instead of a title search */
+  .ask {
+    display: flex; align-items: center; gap: 14px; width: calc(100% - 2 * var(--gutter)); margin: 0 var(--gutter) 8px; padding: 14px 18px;
+    border: 0; border-radius: var(--radius); background: var(--card); text-align: left; cursor: pointer; font-weight: 600;
+  }
+  .ask:hover { background: #24305a; }
+  .ask svg { flex: none; color: var(--accent); }
+  .ask small { display: block; color: var(--muted); font-size: 13px; font-weight: 400; }
+
+  /* Réglages */
+  .settings { margin: 0 var(--gutter); max-width: 760px; }
+  .settings h1 { font: 800 32px "Bricolage Grotesque", Figtree, sans-serif; margin: 0 0 24px; }
+  .settings section { display: grid; gap: 16px; padding: 24px; border-radius: var(--radius); background: var(--card); }
+  .settings h2 { margin: 0; font-size: 18px; }
+  .settings p { margin: 0; color: var(--muted); }
+  .settings label { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font-weight: 600; cursor: pointer; }
+  .settings input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent); cursor: pointer; }
+  .settings input[type="time"] {
+    height: 36px; padding: 0 12px; border: 0; border-radius: 18px; background: #2d2f36; color: var(--text);
+    font: 15px Figtree, sans-serif; color-scheme: dark;
+  }
+  .settings .btn { justify-self: start; }
+  .settings .status:empty { display: none; }
+  .settings { display: grid; gap: 24px; }
+  .settings h1 { margin-bottom: 0; }
+  .settings fieldset { margin: 0; padding: 18px 0 0; border: 0; border-top: 1px solid rgba(255,255,255,.1); display: grid; gap: 10px; }
+  .settings legend { padding: 0; font-weight: 700; font-size: 16px; }
+  .settings fieldset legend + p { font-size: 14px; }
+  .settings .fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 16px; }
+  @media (max-width: 600px) { .settings .fields { grid-template-columns: 1fr; } }
+  .settings .fields label { display: grid; gap: 6px; font-size: 13px; color: var(--muted); }
+  .settings .fields input, .settings .fields select {
+    height: 40px; padding: 0 14px; border: 1px solid rgba(255,255,255,.14); border-radius: 10px; background: #0f1630; color: var(--text);
+    font: 15px Figtree, sans-serif; color-scheme: dark; min-width: 0;
+  }
+  .settings .fields input:focus, .settings .fields select:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent; }
+  .settings .fields input::placeholder { color: rgba(242,244,250,.5); }
+  .settings .hint { font-size: 13px; min-height: 1.4em; }
+  .settings code { font-size: 13px; color: var(--text); }
+
+  /* Nimbus, the AI page: the composer is a liquid glass lens over the library's own posters drifting behind it.
+     While the AI searches, a glass droplet ripples; its answer arrives as cards coming into focus. */
+  .nb { position: relative; min-height: calc(100vh - 152px); }
+  .nb::after {
+    content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background: radial-gradient(ellipse 75% 65% at 50% 45%, rgba(11,16,32,.38), rgba(11,16,32,.88) 80%),
+      linear-gradient(var(--bg), transparent 18%, transparent 70%, var(--bg));
+  }
+  .nb > :not(.nb-wall) { position: relative; z-index: 1; }
+  .nb-wall {
+    position: fixed; inset: -12vh -12vw; z-index: 0; display: grid; align-content: center; gap: 18px;
+    transform: rotate(-7deg); opacity: 0; pointer-events: none; transition: opacity 1.2s cubic-bezier(.16,1,.3,1);
+  }
+  .nb-wall.ready { opacity: .85; }
+  .nb[data-state="chat"] .nb-wall.ready { opacity: .35; }
+  .nb-lane { overflow: hidden; }
+  .nb-lane > div { display: flex; gap: 18px; padding-right: 18px; width: max-content; animation: nb-drift 170s linear infinite; }
+  .nb-lane:nth-child(2) > div { animation-direction: reverse; animation-duration: 210s; }
+  .nb-lane:nth-child(3) > div { animation-duration: 190s; }
+  .nb-lane img { width: 150px; aspect-ratio: 2 / 3; object-fit: cover; border-radius: 10px; }
+  @keyframes nb-drift { to { transform: translateX(calc(-100% / 3)); } }
+
+  .glass {
+    background: linear-gradient(160deg, rgba(255,255,255,.17), rgba(255,255,255,.05) 45%, rgba(255,255,255,.09));
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    backdrop-filter: blur(16px) saturate(180%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.5), inset 1px 0 0 rgba(255,255,255,.14), inset 0 -1px 0 rgba(255,255,255,.1),
+      inset 0 0 0 1px rgba(255,255,255,.1), 0 20px 50px -18px rgba(0,0,0,.75);
+  }
+  /* Chromium bends what is behind the glass through an SVG displacement filter; elsewhere it stays frosted. */
+  @supports (backdrop-filter: url(#nb-glass)) {
+    .glass { backdrop-filter: url(#nb-glass) blur(3px) saturate(185%) brightness(1.08); }
+  }
+
+  .nb-hello { text-align: center; padding: 13vh var(--gutter) 30px; }
+  .nb-hello h1 {
+    margin: 0 auto 14px; max-width: 15ch; font: 800 clamp(34px, 4.6vw, 62px)/1.02 "Bricolage Grotesque", Figtree, sans-serif;
+    letter-spacing: -0.025em; text-wrap: balance; text-shadow: 0 4px 30px rgba(0,0,0,.55);
+  }
+  .nb-hello p { margin: 0 auto; max-width: 50ch; color: #c3cadc; font-size: 17px; text-wrap: pretty; text-shadow: 0 2px 12px rgba(0,0,0,.6); }
+  .nb[data-state="chat"] .nb-hello, .nb[data-state="chat"] .nb-ideas, .nb[data-state="idle"] .nb-thread, .nb[data-state="idle"] .nb-new { display: none; }
+
+  .nb-composer {
+    view-transition-name: nb-composer; z-index: 15 !important; isolation: isolate; overflow: hidden;
+    display: flex; align-items: flex-end; gap: 10px; width: min(720px, calc(100% - 2 * var(--gutter))); margin: 0 auto;
+    padding: 9px 9px 9px 24px; border-radius: 32px; transition: box-shadow .25s;
+  }
+  .nb-composer:focus-within { box-shadow: inset 0 1px 0 rgba(255,255,255,.55), inset 0 0 0 1.5px rgba(124,196,255,.6), 0 24px 60px -18px rgba(0,0,0,.8); }
+  .nb[data-state="chat"] .nb-composer { position: fixed; left: 50%; bottom: 24px; translate: -50% 0; width: min(760px, calc(100% - 2 * var(--gutter))); }
+  /* Docked over results: a darker tint keeps the text readable, and the cards fade out before reaching it. */
+  .nb[data-state="chat"] .nb-composer { background: linear-gradient(160deg, rgba(255,255,255,.15), rgba(255,255,255,.04) 45%, rgba(255,255,255,.07)), rgba(14,20,42,.62); }
+  .nb[data-state="chat"]::before {
+    content: ""; position: fixed; inset: auto 0 0; height: 150px; z-index: 14; pointer-events: none;
+    background: linear-gradient(transparent, rgba(11,16,32,.85) 55%, var(--bg));
+  }
+  .nb-composer textarea {
+    flex: 1; min-width: 0; max-height: 160px; padding: 10px 0; border: 0; outline: 0; resize: none; background: none; color: var(--text);
+    font: 17px/1.45 Figtree, system-ui, sans-serif; field-sizing: content;
+  }
+  .nb-composer textarea::placeholder { color: rgba(242,244,250,.62); }
+  .nb-send {
+    flex: none; width: 46px; height: 46px; display: grid; place-items: center; border: 0; border-radius: 50%; cursor: pointer;
+    background: var(--text); color: var(--bg); transition: background .2s, color .2s, transform .15s cubic-bezier(.16,1,.3,1);
+  }
+  .nb-send:hover:not(:disabled) { background: #fff; }
+  .nb-send:active:not(:disabled) { transform: scale(.9); }
+  .nb-send:disabled { background: rgba(255,255,255,.16); color: rgba(242,244,250,.5); cursor: default; }
+  /* Busy: light runs along the glass while the AI works. */
+  .nb.busy .nb-composer::before {
+    content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background: linear-gradient(100deg, transparent 30%, rgba(124,196,255,.28) 48%, rgba(170,150,255,.2) 54%, transparent 70%) 120% 0 / 250% 100% no-repeat;
+    animation: nb-sheen 1.8s cubic-bezier(.45,0,.25,1) infinite;
+  }
+  @keyframes nb-sheen { to { background-position: -120% 0; } }
+  ::view-transition-group(nb-composer) { animation-duration: .6s; animation-timing-function: cubic-bezier(.16,1,.3,1); }
+
+  .nb-ideas { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; max-width: 760px; margin: 22px auto 0; padding: 0 var(--gutter); }
+  .nb-ideas button, .nb-new, .nb-retry {
+    padding: 10px 17px; border: 0; border-radius: 999px; cursor: pointer; font: 600 14px Figtree, sans-serif; color: var(--text);
+    transition: background-color .2s;
+  }
+  .nb-ideas button:hover, .nb-new:hover, .nb-retry:hover { background-color: rgba(255,255,255,.14); }
+  .nb-new { position: absolute !important; top: 0; right: var(--gutter); }
+
+  .nb-thread { padding: 64px var(--gutter) 190px; }
+  .nb-turn { margin-bottom: 64px; scroll-margin-top: 96px; }
+  .nb-q { width: fit-content; max-width: min(560px, 85%); margin: 0 0 26px auto; padding: 12px 20px; border-radius: 24px 24px 6px 24px; font-size: 16px; overflow-wrap: anywhere; }
+  .nb-intro { max-width: 62ch; margin: 0 0 22px; font: 500 clamp(18px, 1.6vw, 22px)/1.4 Figtree, sans-serif; text-wrap: pretty; }
+  .nb-results.grid { padding: 0; }
+  .nb-availability { margin-top: 6px; color: var(--muted); font-size: 12px; }
+  .nb-availability.available { color: #a4d8be; }
+  .nb-notice { max-width: 65ch; margin: 0 0 22px; color: var(--muted); font-size: 14px; }
+  .nb-error { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin: 0; color: #ffc9c9; }
+  .nb-retry { background: rgba(255,255,255,.1); }
+
+  .nb-think { display: flex; align-items: center; gap: 20px; min-height: 100px; }
+  .nb-orb {
+    flex: none; width: 86px; height: 86px; border-radius: 42% 58% 61% 39% / 45% 41% 59% 55%;
+    background: radial-gradient(circle at 32% 26%, rgba(255,255,255,.6), rgba(124,196,255,.22) 34%, rgba(107,91,255,.16) 68%, rgba(255,255,255,.1));
+    animation: nb-morph 3.4s ease-in-out infinite, nb-spin 11s linear infinite;
+  }
+  @supports (backdrop-filter: url(#nb-liquid)) { .nb-orb { backdrop-filter: url(#nb-liquid) blur(1px) saturate(210%) brightness(1.12); } }
+  @keyframes nb-morph {
+    0%, 100% { border-radius: 42% 58% 61% 39% / 45% 41% 59% 55%; scale: 1; }
+    33% { border-radius: 58% 42% 38% 62% / 55% 61% 39% 45%; scale: 1.06; }
+    66% { border-radius: 50% 50% 56% 44% / 38% 58% 42% 62%; scale: .96; }
+  }
+  @keyframes nb-spin { to { rotate: 360deg; } }
+  .nb-status { font-weight: 600; color: #c3cadc; }
+  .nb-status.tick { animation: nb-tick .5s cubic-bezier(.16,1,.3,1); }
+  @keyframes nb-tick { from { opacity: 0; filter: blur(4px); transform: translateY(6px); } }
+  .nb-think.leaving { animation: nb-pop .28s cubic-bezier(.5,0,.75,0) forwards; }
+  @keyframes nb-pop { to { opacity: 0; scale: 1.12; filter: blur(10px); } }
+
+  /* The answer: the sentence is uncovered left to right, then the cards come into focus one after another. */
+  .nb-turn.fresh .nb-intro { animation: nb-write .9s cubic-bezier(.16,1,.3,1) both; }
+  @keyframes nb-write { from { clip-path: inset(0 100% 0 0); filter: blur(6px); } }
+  .nb-turn.fresh .nb-results > div { animation: nb-in .8s cubic-bezier(.16,1,.3,1) both; animation-delay: calc(.2s + min(var(--i) * 60ms, 660ms)); }
+  @keyframes nb-in { from { opacity: 0; transform: translateY(26px) scale(.93); filter: blur(14px); } }
+  .nb-turn.fresh .nb-q { animation: nb-in .5s cubic-bezier(.16,1,.3,1) both; }
+
+  @media (max-width: 767px) {
+    .nb-lane img { width: 104px; }
+    .nb-hello { padding-top: 8vh; }
+    .nb[data-state="chat"] .nb-composer { bottom: 12px; }
+    .nb-thread { padding-top: 56px; }
+  }
+
+  /* Player */
+  body.playing header { display: none; }
+  body.playing main { padding: 0; }
+  .player { position: fixed; inset: 0; z-index: 30; background: #000; }
+  .player video { width: 100%; height: 100%; display: block; }
+  .player .top {
+    position: absolute; inset: 0 0 auto; padding: 20px var(--gutter) 60px; display: flex; align-items: center; gap: 16px;
+    background: linear-gradient(rgba(0,0,0,.75), transparent); transition: opacity .4s; pointer-events: none;
+  }
+  .player .top > * { pointer-events: auto; }
+  .player.idle .top { opacity: 0; }
+  .player.idle { cursor: none; }
+  .player .back { background: none; border: 0; cursor: pointer; padding: 6px; display: grid; place-items: center; border-radius: 50%; }
+  .player .back:hover { background: rgba(255,255,255,.15); }
+  .player .t { font-family: "Bricolage Grotesque", Figtree, sans-serif; font-size: clamp(16px, 1.6vw, 22px); font-weight: 600; }
+  .player .s { color: var(--muted); font-size: 14px; }
+
+  .player .tracks-btn { margin-left: auto; background: none; border: 0; cursor: pointer; padding: 8px; border-radius: 8px; display: grid; }
+  .player .tracks-btn:hover, .player .tracks-btn[aria-expanded="true"] { background: rgba(255,255,255,.15); }
+  .player .tracks {
+    position: absolute; top: 76px; right: var(--gutter); z-index: 2; display: grid; grid-template-columns: repeat(2, minmax(180px, 1fr)); gap: 24px;
+    max-width: calc(100vw - 2 * var(--gutter)); max-height: calc(100vh - 160px); overflow: auto;
+    padding: 20px; background: rgba(18, 26, 51, .96); border-radius: 12px; box-shadow: 0 18px 40px rgba(0,0,0,.6);
+  }
+  .player .tracks[hidden] { display: none; }
+  .player .tracks h4 { margin: 0 0 8px; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+  .player .tracks p { margin: 0; color: var(--muted); }
+  .player .tracks .mode { grid-column: 1 / -1; font-size: 12px; border-top: 1px solid rgba(255,255,255,.1); padding-top: 12px; }
+  .player .next-btn { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; padding: 6px 6px 6px 14px; border-radius: 8px; font-weight: 600; background: rgba(255,255,255,.12); }
+  .player .next-btn:hover { background: rgba(255,255,255,.22); }
+  .player .next-btn svg { width: 20px; height: 20px; }
+  .player .next-btn + .tracks-btn { margin-left: 0; }
+  .player .tracks button { display: block; width: 100%; text-align: left; padding: 8px 10px; border: 0; border-radius: 6px; background: none; cursor: pointer; color: var(--muted); }
+  .player .tracks button:hover { background: rgba(255,255,255,.08); color: var(--text); }
+  .player .tracks button[aria-pressed="true"] { color: var(--text); font-weight: 600; }
+  .player .tracks button:disabled { opacity: .5; cursor: progress; }
+  @media (max-width: 720px) { .player .tracks { grid-template-columns: 1fr; left: var(--gutter); } }
+  video::cue { font-family: Figtree, sans-serif; background: rgba(0,0,0,.55); }
+
+  .skeleton { background: linear-gradient(90deg, var(--card) 0%, var(--bg-2) 50%, var(--card) 100%); background-size: 200% 100%; animation: shimmer 1.4s infinite; }
+  @keyframes shimmer { to { background-position: -200% 0; } }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+<header id="top">
+  <a class="brand" href="#/" aria-label="Nimbus, accueil">
+    <svg width="30" height="22" viewBox="0 0 30 22" fill="currentColor" aria-hidden="true"><path d="M23.5 22H7a7 7 0 0 1-1-13.93A9 9 0 0 1 23.24 7 7.5 7.5 0 0 1 23.5 22Z"/></svg>
+    <span>Nimbus</span>
+  </a>
+  <nav>
+    <a href="#/" data-route=""><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3 2 11h3v9h5v-6h4v6h5v-9h3z"/></svg><span>Accueil</span></a>
+    <a href="#/recherche" data-route="recherche"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4.8-4.8"/></svg><span>Recherche</span></a>
+    <a href="#/nimbus" data-route="nimbus"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.2 6.8L21 9l-6.8 2.2L12 18l-2.2-6.8L3 9l6.8-2.2zM19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9z"/></svg><span>Nimbus</span></a>
+    <a href="#/decouvrir" data-route="decouvrir"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5z" fill="currentColor"/></svg><span>Découvrir</span></a>
+    <a href="#/films" data-route="films"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 4h16v16H4zm2 2v2h2V6zm0 4v4h2v-4zm0 6v2h2v-2zm10-10v2h2V6zm0 4v4h2v-4zm0 6v2h2v-2z"/></svg><span>Films</span></a>
+    <a href="#/series" data-route="series"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 6h18v12H3zm5 14h8v1.5H8zM9 2l3 3 3-3 1 1-3 3h-2L8 3z"/></svg><span>Séries</span></a>
+  </nav>
+  <a class="avatar" href="#/reglages" aria-label="Réglages" title="Réglages">N</a>
+</header>
+<main id="view"></main>
+<!-- Liquid glass: what is behind the glass gets bent by noise; the droplet's noise moves while the AI thinks. -->
+<svg class="sr-only" aria-hidden="true" focusable="false"><defs>
+  <filter id="nb-glass" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.006 0.011" numOctaves="2" seed="7" result="noise"/>
+    <feGaussianBlur in="noise" stdDeviation="1.5" result="soft"/>
+    <feDisplacementMap in="SourceGraphic" in2="soft" scale="34" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+  <filter id="nb-liquid" x="-10%" y="-10%" width="120%" height="120%" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.02 0.03" numOctaves="2" seed="2" result="noise">
+      <animate attributeName="baseFrequency" dur="5s" values="0.02 0.03;0.035 0.018;0.02 0.03" repeatCount="indefinite"/>
+    </feTurbulence>
+    <feDisplacementMap in="SourceGraphic" in2="noise" scale="40" xChannelSelector="R" yChannelSelector="G">
+      <animate attributeName="scale" dur="3s" values="28;54;28" repeatCount="indefinite"/>
+    </feDisplacementMap>
+  </filter>
+</defs></svg>
+
+<script>
+const $view = document.getElementById('view');
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const meta = (i) => [i.year, i.genres.slice(0, 2).join(', ')].filter(Boolean).join(' • ');
+const chevron = (d) => `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" aria-hidden="true"><path d="${d === 'l' ? 'm15 5-7 7 7 7' : 'm9 5 7 7-7 7'}"/></svg>`;
+const ext = '';
+
+let heroTimer;
+let leavePlayer = () => {};
+let leaveDownloads = () => {};
+addEventListener('scroll', () => document.getElementById('top').classList.toggle('solid', scrollY > 20), { passive: true });
+addEventListener('hashchange', route);
+
+async function route() {
+  clearInterval(heroTimer);
+  leavePlayer();
+  leaveDownloads();
+  peekObserver.disconnect();
+  peekObserved = new WeakSet();
+  peekQueue.clear();
+  const page = location.hash.replace(/^#\/?/, '');
+  const [path, query = ''] = page.split('?');
+  document.body.classList.toggle('playing', page.startsWith('lecture/'));
+  document.querySelectorAll('nav a').forEach((a) => (a.dataset.route === path ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')));
+  scrollTo(0, 0);
+  if (location.protocol === 'file:') {
+    $view.innerHTML = `<div class="state">Ouvre Nimbus via le serveur : lance <code>npm start</code> puis va sur http://127.0.0.1:3000.</div>`;
+    return;
+  }
+  if (page === 'recherche') return renderSearch();
+  if (page === 'reglages') return renderSettings();
+  if (path === 'nimbus') return renderNimbus(query);
+  if (path === 'decouvrir') return renderDiscover(query);
+  if (page.startsWith('lecture/')) return renderPlayer(page.slice('lecture/'.length));
+  if (page.startsWith('titre/')) return renderDetail(`/api/item/${encodeURIComponent(page.slice('titre/'.length))}`);
+  const disc = page.match(/^decouvrir\/(movie|tv)\/(\d+)$/);
+  if (disc) return renderDetail(`/api/discover/item/${disc[1]}/${disc[2]}`);
+  $view.innerHTML = `<div class="hero"><div class="hero-track"><div class="slide active skeleton"></div></div></div>`;
+  try {
+    const res = await fetch(`/api/home?view=${page}`);
+    if (!res.ok) throw new Error((await res.json()).error);
+    const data = await res.json();
+    $view.innerHTML = hero(data.hero) + data.rows.map(row).join('');
+    wire();
+    if (!document.createElement('video').canPlayType('application/vnd.apple.mpegurl')) (window.requestIdleCallback || setTimeout)(() => loadHls().catch(() => {}));
+  } catch (e) {
+    $view.innerHTML = `<div class="state">Impossible de joindre Jellyfin.<br><small>${esc(e.message)}</small></div>`;
+  }
+}
+
+function hero(items) {
+  if (!items.length) return '';
+  const slides = items.map((i, n) => `
+    <div class="slide${n ? '' : ' active'}" role="tabpanel" aria-hidden="${!!n}">
+      <img class="bg" src="${i.art}" alt="" ${n ? 'loading="lazy"' : 'fetchpriority="high"'}>
+      <a class="slide-link" href="${i.discover ? i.href : `#/titre/${i.key}`}" tabindex="-1" aria-hidden="true"></a>
+      <div class="info">
+        ${i.logo ? `<img class="logo" src="${i.logo}" alt="${esc(i.title)}">` : `<h2>${esc(i.title)}</h2>`}
+        <div class="meta">${i.rating ? `<span class="badge">${esc(i.rating)}</span>` : ''}<span>${esc(meta(i))}</span></div>
+        <p>${esc(i.summary)}</p>
+        ${i.discover
+          ? `<a class="btn" href="${i.href}" tabindex="${n ? -1 : 0}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>Plus d'infos</a>`
+          : `<a class="btn" href="#/lecture/${i.key}" ${ext} tabindex="${n ? -1 : 0}"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 4v16l14-8z"/></svg>Regarder</a>`}
+      </div>
+    </div>`).join('');
+  const dots = items.map((_, n) => `<button role="tab" aria-label="${n + 1} sur ${items.length}" aria-selected="${!n}"></button>`).join('');
+  return `<section class="hero" aria-roledescription="carrousel" aria-label="À la une">
+    <div class="hero-track">${slides}</div>
+    <button class="hero-arrow prev" aria-label="Précédent">${chevron('l')}</button>
+    <button class="hero-arrow next" aria-label="Suivant">${chevron('r')}</button>
+    <div class="dots" role="tablist">${dots}</div>
+  </section>`;
+}
+
+function card(i, style, n10, availability = false) {
+  if (['poster', 'large', 'discover', 'top10'].includes(style)) peekItems.set(i.href, i);
+  if (style === 'top10') {
+    return `<a class="t10" href="${i.href}" aria-label="${n10}. ${esc([i.title, i.year].filter(Boolean).join(', '))}, pas dans ta médiathèque">
+      <span class="rank" aria-hidden="true">${n10}</span><span class="card"><img src="${i.poster}" alt="" loading="lazy">${i.requested ? '<span class="chip">Demandé</span>' : ''}</span></a>`;
+  }
+  if (style === 'discover') {
+    return `<a class="card" href="${i.href}" aria-label="${esc([i.title, i.year].filter(Boolean).join(', '))}, pas dans ta médiathèque">
+      <img src="${i.poster}" alt="" loading="lazy">${i.requested ? '<span class="chip">Demandé</span>' : ''}</a>`;
+  }
+  const label = esc([i.title, i.subtitle, meta(i)].filter(Boolean).join(', '));
+  const pic = (src) => (src ? `<img src="${src}" alt="" loading="lazy">` : `<span class="fallback">${esc(i.title)}</span>`);
+  const tag = `<span class="tag">${i.logo ? `<img src="${i.logo}" alt="">` : esc(i.title)}</span>`;
+  // Landscape cards prefer art with the title on it; plain art gets the logo (or the name) laid over it.
+  const src = i.thumb || i.still || i.art || i.poster;
+  if (style === 'tile') return `<a class="card" href="${i.href}" ${ext} aria-label="${label}">${pic(src)}${i.thumb || !src ? '' : tag}</a>`;
+  if (style === 'wide') {
+    const status = i.discover ? (i.requested ? 'Déjà demandé' : 'À découvrir · hors médiathèque') : 'Dans ta médiathèque';
+    return `<div><a class="card" href="${i.href}" ${ext} aria-label="${label}${availability ? `, ${status}` : ''}">${pic(src)}${i.thumb || !src ? '' : tag}</a>
+      <div class="cw-meta"><div class="t2">${esc(i.title)}</div><div class="s">${i.rating ? `<span class="badge">${esc(i.rating)}</span>` : ''}${esc(meta(i))}</div>${availability ? `<div class="nb-availability${i.discover ? '' : ' available'}">${status}</div>` : ''}</div></div>`;
+  }
+  if (style === 'continue') {
+    return `<div>
+      <a class="card" href="#/lecture/${i.key}" ${ext} aria-label="Reprendre ${label}">${pic(src)}${i.thumb || !src ? '' : tag}
+        <span class="play"><svg width="44" height="44" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="20" fill="#fff"/><path d="M15 12v16l13-8z" fill="#0b1020"/></svg></span>
+        ${i.progress ? `<span class="progress"><i style="width:${Math.round(i.progress * 100)}%"></i></span>` : ''}
+      </a>
+      <div class="cw-meta">${i.remaining ? `<div class="left">Il reste ${fmt(i.remaining)}</div>` : ''}<div class="t">${esc(i.title)}</div><div class="s">${esc(i.subtitle || meta(i))}</div></div>
+    </div>`;
+  }
+  // Posters already show the title, so nothing is written over them, not even on hover;
+  // the few without one (flagged by the server) get the logo, or the name.
+  return `<a class="card" href="${i.href}" ${ext} aria-label="${label}">${pic(i.poster)}${i.textless && i.poster ? tag : ''}</a>`;
+}
+
+const fmt = (m) => (m >= 60 ? `${Math.floor(m / 60)} h ${m % 60} min` : `${m} min`);
+
+function row(r) {
+  return `<section class="row" aria-label="${esc(r.title)}">
+    <h3>${esc(r.title)}${r.more ? `<a class="see-all" href="${r.more}">Voir tout<span class="sr-only"> : ${esc(r.title)}</span></a>` : ''}</h3>
+    <button class="row-arrow prev" aria-label="Défiler à gauche" disabled>${chevron('l')}</button>
+    <div class="shelf ${r.style}">${r.html ?? r.items.map((i, n) => card(i, r.style, n + 1)).join('')}</div>
+    <button class="row-arrow next" aria-label="Défiler à droite">${chevron('r')}</button>
+  </section>`;
+}
+
+function wire() {
+  observePeekCards();
+  document.querySelectorAll('.row').forEach((r) => {
+    const shelf = r.querySelector('.shelf');
+    const [prev, next] = r.querySelectorAll('.row-arrow');
+    const sync = () => {
+      prev.disabled = shelf.scrollLeft < 4;
+      next.disabled = shelf.scrollLeft + shelf.clientWidth >= shelf.scrollWidth - 4;
+    };
+    prev.onclick = () => shelf.scrollBy({ left: -shelf.clientWidth * 0.85, behavior: 'smooth' });
+    next.onclick = () => shelf.scrollBy({ left: shelf.clientWidth * 0.85, behavior: 'smooth' });
+    shelf.addEventListener('scroll', sync, { passive: true });
+    sync();
+  });
+
+  const h = document.querySelector('.hero');
+  if (!h) return;
+  const slides = h.querySelectorAll('.slide');
+  const dots = h.querySelectorAll('.dots button');
+  let cur = 0;
+  const track = h.querySelector('.hero-track');
+  const go = (n) => {
+    cur = (n + slides.length) % slides.length;
+    track.style.setProperty('--i', cur);
+    slides.forEach((s, k) => {
+      s.classList.toggle('active', k === cur);
+      s.setAttribute('aria-hidden', k !== cur);
+      s.querySelector('.btn').tabIndex = k === cur ? 0 : -1;
+    });
+    dots.forEach((d, k) => d.setAttribute('aria-selected', k === cur));
+  };
+  const restart = () => {
+    clearInterval(heroTimer);
+    if (!matchMedia('(prefers-reduced-motion: reduce)').matches) heroTimer = setInterval(() => go(cur + 1), 7000);
+  };
+  h.querySelector('.prev').onclick = () => { go(cur - 1); restart(); };
+  h.querySelector('.next').onclick = () => { go(cur + 1); restart(); };
+  dots.forEach((d, k) => (d.onclick = () => { go(k); restart(); }));
+  h.addEventListener('mouseenter', () => clearInterval(heroTimer));
+  h.addEventListener('mouseleave', restart);
+  restart();
+}
+
+let hlsLib;
+const loadHls = () => (hlsLib ??= new Promise((ok, ko) => {
+  const s = document.createElement('script');
+  s.src = 'https://cdn.jsdelivr.net/npm/hls.js@1.5.20/dist/hls.min.js';
+  s.onload = () => ok(window.Hls);
+  s.onerror = ko;
+  document.head.append(s);
+}));
+
+// What this browser decodes without help, so Jellyfin copies instead of converting.
+const caps = (() => {
+  const mse = (t) => { try { return window.MediaSource?.isTypeSupported(t) || document.createElement('video').canPlayType(t) === 'probably'; } catch { return false; } };
+  return Object.entries({
+    hevc: 'video/mp4; codecs="hvc1.1.6.L120.90"', av1: 'video/mp4; codecs="av01.0.08M.08"', vp9: 'video/mp4; codecs="vp09.00.10.08"',
+    ac3: 'audio/mp4; codecs="ac-3"', eac3: 'audio/mp4; codecs="ec-3"', opus: 'audio/mp4; codecs="opus"', flac: 'audio/mp4; codecs="flac"',
+  }).filter(([, t]) => mse(t)).map(([k]) => k).concat(matchMedia('(dynamic-range: high)').matches ? ['hdr'] : []).join(',');
+})();
+// Remembered audio/subtitle languages, per browser (a convenience: losing it just means Jellyfin defaults).
+const langPrefs = {
+  get() { try { return JSON.parse(localStorage.getItem('nimbus.lang')) || {}; } catch { return {}; } },
+  set(v) { try { localStorage.setItem('nimbus.lang', JSON.stringify(v)); } catch {} },
+};
+
+async function renderPlayer(id) {
+  $view.innerHTML = `<div class="state">Chargement…</div>`;
+  const getInfo = async (extra = {}) => {
+    const { alang, slang } = langPrefs.get();
+    const qs = new URLSearchParams(Object.entries({ caps, alang, slang, ...extra }).filter(([, v]) => v != null && v !== ''));
+    const res = await fetch(`/api/play/${encodeURIComponent(id)}?${qs}`);
+    if (!res.ok) throw new Error((await res.json()).error);
+    return res.json();
+  };
+  let info;
+  try {
+    info = await getInfo();
+  } catch (e) {
+    $view.innerHTML = `<div class="state">Lecture impossible.<br><small>${esc(e.message)}</small><br><br><a class="btn" href="#/">Retour</a></div>`;
+    return;
+  }
+
+  $view.innerHTML = `<div class="player">
+    <video controls autoplay playsinline crossorigin="anonymous"></video>
+    <div class="top">
+      <button class="back" aria-label="Retour">${chevron('l')}</button>
+      <div><div class="t">${esc(info.title)}</div>${info.subtitle ? `<div class="s">${esc(info.subtitle)}</div>` : ''}</div>
+      ${info.next ? `<a class="next-btn" href="#/lecture/${info.next}">Épisode suivant ${chevron('r')}</a>` : ''}
+      <button class="tracks-btn" aria-label="Audio et sous-titres" aria-expanded="false" aria-controls="tracks">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M10.5 10.2a2.3 2.3 0 1 0 0 3.6M17.5 10.2a2.3 2.3 0 1 0 0 3.6"/></svg>
+      </button>
+    </div>
+    <div class="tracks" id="tracks" hidden></div>
+  </div>`;
+  const player = $view.querySelector('.player');
+  const video = player.querySelector('video');
+  const panel = player.querySelector('.tracks');
+  const btn = player.querySelector('.tracks-btn');
+  player.querySelector('.back').onclick = () => (history.length > 1 ? history.back() : (location.hash = '#/'));
+
+  let hls;
+  async function attach(at) {
+    hls?.destroy();
+    hls = null;
+    video.querySelectorAll('track').forEach((t) => t.remove());
+    for (const s of info.subs.filter((s) => s.vtt)) {
+      const t = Object.assign(document.createElement('track'), { kind: 'subtitles', src: s.vtt, label: s.label, srclang: s.lang.slice(0, 2) });
+      t.dataset.index = s.index;
+      video.append(t);
+    }
+    showText();
+    if (info.mode === 'direct' || video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = info.src;
+      video.addEventListener('loadedmetadata', () => (video.currentTime = at), { once: true });
+    } else {
+      const Hls = await loadHls();
+      hls = new Hls({ startPosition: at, startFragPrefetch: true, maxBufferLength: 60, backBufferLength: 30 });
+      hls.loadSource(info.src);
+      hls.attachMedia(video);
+      hls.on(Hls.Events.ERROR, (_, d) => d.fatal && console.error('HLS', d));
+    }
+    video.play().catch(() => {});
+  }
+  // Only the chosen text track is shown; burned-in (image) subtitles have no <track>.
+  const showText = () => [...video.textTracks].forEach((tt, k) => {
+    tt.mode = String(info.sub) === video.querySelectorAll('track')[k]?.dataset.index ? 'showing' : 'disabled';
+  });
+
+  function menu() {
+    const opt = (kind, index, label, on) =>
+      `<button data-kind="${kind}" data-index="${index}" aria-pressed="${on}">${on ? '✓ ' : ''}${esc(label)}</button>`;
+    panel.innerHTML = `
+      <div><h4>Audio</h4>${info.audios.map((a) => opt('audio', a.index, a.label, a.index === info.audio)).join('') || '<p>Piste unique</p>'}</div>
+      <div><h4>Sous-titres</h4>${opt('sub', -1, 'Désactivés', info.sub === -1)}${info.subs.map((s) => opt('sub', s.index, s.vtt ? s.label : `${s.label} (incrusté)`, s.index === info.sub)).join('')}</div>
+      <p class="mode">${{ direct: 'Lecture directe : le fichier est lu tel quel', remux: 'Image d\'origine : Jellyfin réemballe la vidéo sans la convertir', transcode: 'Conversion par Jellyfin (format non lisible par ce navigateur)' }[info.mode]}</p>`;
+  }
+  menu();
+  // Browsers auto-enable a track matching their own language once media loads; reassert our choice.
+  video.addEventListener('loadeddata', showText);
+
+  panel.onclick = async (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    const index = Number(b.dataset.index);
+    const wantSub = b.dataset.kind === 'sub' ? index : info.sub;
+    const wantAudio = b.dataset.kind === 'audio' ? index : info.audio;
+    if (wantSub === info.sub && wantAudio === info.audio) return;
+    const burnedNow = info.subs.some((s) => s.index === info.sub && !s.vtt);
+    const burnNext = info.subs.some((s) => s.index === wantSub && !s.vtt);
+    if (wantAudio === info.audio && !burnedNow && !burnNext) {
+      info.sub = wantSub; // text subtitle: switch instantly, no new stream
+      info.slang = wantSub === -1 ? 'none' : info.subs.find((s) => s.index === wantSub)?.lang || null;
+      langPrefs.set({ alang: info.alang, slang: info.slang });
+      showText();
+      return menu();
+    }
+    // Audio or burned-in subtitle change: Jellyfin needs a new stream, resumed at the same spot.
+    const at = video.currentTime;
+    save(true);
+    b.disabled = true;
+    try {
+      info = await getInfo({ audio: wantAudio, sub: wantSub });
+      langPrefs.set({ alang: info.alang, slang: info.slang });
+      menu();
+      await attach(at);
+    } catch (err) {
+      b.disabled = false;
+      console.error(err);
+    }
+  };
+  const toggle = (open = panel.hidden) => {
+    panel.hidden = !open;
+    btn.setAttribute('aria-expanded', open);
+    if (open) panel.querySelector('[aria-pressed="true"]')?.focus();
+  };
+  btn.onclick = () => toggle();
+  player.addEventListener('keydown', (e) => e.key === 'Escape' && !panel.hidden && (toggle(false), btn.focus()));
+  video.addEventListener('click', () => toggle(false));
+
+  await attach(info.start);
+  video.focus();
+
+  // Save where we are so "Reprendre la lecture" stays in sync.
+  function save(done = false) {
+    if (!video.duration || !video.currentTime) return;
+    const payload = JSON.stringify({ id: info.id, pos: video.currentTime, dur: video.duration, playSession: info.playSession, done });
+    if (done) navigator.sendBeacon('/api/progress', new Blob([payload], { type: 'application/json' }));
+    else fetch('/api/progress', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload });
+  }
+  const tick = setInterval(() => !video.paused && save(), 15000);
+  video.addEventListener('pause', () => save());
+  video.addEventListener('ended', () => { save(); location.hash = info.next ? `#/lecture/${info.next}` : '#/'; });
+
+  let idle;
+  const wake = () => {
+    player.classList.remove('idle');
+    clearTimeout(idle);
+    idle = setTimeout(() => !video.paused && panel.hidden && player.classList.add('idle'), 3000);
+  };
+  player.addEventListener('mousemove', wake);
+  video.addEventListener('pause', wake);
+  wake();
+
+  const onHide = () => save(true);
+  addEventListener('pagehide', onHide);
+  leavePlayer = () => {
+    save(true);
+    clearInterval(tick);
+    clearTimeout(idle);
+    removeEventListener('pagehide', onHide);
+    hls?.destroy();
+    video.removeAttribute('src');
+    leavePlayer = () => {};
+  };
+}
+
+// Vertical cards: the usual hover (zoom + white ring) at once, then after a short pause the poster opens
+// into a wider landscape panel with logo, actions and a few details (Prime Video style). Mouse only.
+// ponytail: peekItems keeps every vertical card seen this session (a few hundred small objects at most).
+const peekItems = new Map();
+const peek = Object.assign(document.createElement('div'), { className: 'peek', hidden: true });
+document.body.append(peek);
+const canPeek = matchMedia('(hover: hover) and (pointer: fine)');
+let peekTimer, peekCard, peekHide, peekRow, peekGrid, peekPointer;
+const closingPeekRows = new Map();
+const closingPeekGridCards = new Map();
+const titleArts = new Map(); // "movie:123" -> fetch of { logo, art } for discoveries
+const peekImages = new Map(); // Keep decoded images for the next hover, with bounded memory.
+const peekQueue = new Set();
+let peekObserved = new WeakSet(), peekLoading = 0;
+
+function peekArt(i) {
+  return i.discover ? i.art : i.still || i.thumb || i.art;
+}
+
+function loadPeekImage(src, priority = 'low') {
+  if (!src) return Promise.resolve(null);
+  if (peekImages.has(src)) {
+    const entry = peekImages.get(src);
+    if (priority === 'high') entry.image.fetchPriority = priority;
+    peekImages.delete(src);
+    peekImages.set(src, entry);
+    return entry.ready;
+  }
+  const image = new Image();
+  image.decoding = 'async';
+  image.fetchPriority = priority;
+  image.src = src;
+  const entry = { image, ready: image.decode().then(() => image).catch(() => {
+    peekImages.delete(src); // Allow a later hover to retry a failed image.
+    return null;
+  }) };
+  peekImages.set(src, entry);
+  if (peekImages.size > 96) peekImages.delete(peekImages.keys().next().value);
+  return entry.ready;
+}
+
+function warmPeek(i, priority = 'low') {
+  if (!i) return Promise.resolve();
+  return Promise.all([
+    loadPeekImage(peekArt(i), priority), loadPeekImage(i.logo, priority),
+    artFor(i)?.then((art) => Promise.all([loadPeekImage(art.art, priority), loadPeekImage(art.logo, priority)])),
+  ]);
+}
+
+function drainPeekQueue() {
+  while (peekLoading < 2 && peekQueue.size) {
+    const a = peekQueue.values().next().value;
+    peekQueue.delete(a);
+    if (!a.isConnected) continue;
+    peekLoading++;
+    warmPeek(peekItems.get(a.getAttribute('href'))).finally(() => {
+      peekLoading--;
+      drainPeekQueue();
+    });
+  }
+}
+
+// Warm only cards on screen or just below it, including cards revealed by a shelf scroll.
+const peekObserver = new IntersectionObserver((entries) => {
+  for (const { target, isIntersecting } of entries) {
+    if (!target.isConnected) {
+      peekObserver.unobserve(target);
+      peekObserved.delete(target);
+      peekQueue.delete(target);
+      continue;
+    }
+    if (isIntersecting) peekQueue.add(target);
+    else peekQueue.delete(target);
+  }
+  drainPeekQueue();
+}, { rootMargin: '160px 0px' });
+
+function observePeekCards() {
+  if (!canPeek.matches || navigator.connection?.saveData) return;
+  $view.querySelectorAll('.poster a.card, .large a.card, .discover a.card, .top10 a.t10').forEach((a) => {
+    if (peekObserved.has(a)) return;
+    peekObserved.add(a);
+    peekObserver.observe(a);
+  });
+}
+
+function artFor(i) {
+  if (!i?.discover) return null;
+  if (!titleArts.has(i.key)) titleArts.set(i.key, fetch(`/api/discover/art/${i.kind}/${i.tmdbId}`).then((r) => {
+    if (!r.ok) throw new Error('Visuels indisponibles');
+    return r.json();
+  }).then((art) => {
+    if (art.art) i.art = art.art;
+    if (art.logo) i.logo = art.logo;
+    return art;
+  }).catch(() => {
+    titleArts.delete(i.key);
+    return {};
+  }));
+  return titleArts.get(i.key);
+}
+
+function closePeek() {
+  clearTimeout(peekTimer);
+  peekCard = null;
+  if (peekGrid) {
+    cancelAnimationFrame(peekGrid.revealFrame);
+    for (const entry of peekGrid.members) {
+      const { slot, initial } = entry;
+      slot.style.translate = initial.translate;
+      closingPeekGridCards.set(slot, entry);
+      entry.cleanup = setTimeout(() => {
+        if (closingPeekGridCards.get(slot) !== entry) return;
+        closingPeekGridCards.delete(slot);
+        slot.style.height = initial.height;
+        slot.classList.toggle('peeking', initial.peeking);
+      }, 550);
+    }
+    peekGrid = null;
+  }
+  if (peekRow) {
+    const row = peekRow;
+    const { slot, card, shelf, initial } = row;
+    peekRow = null;
+    cancelAnimationFrame(row.revealFrame);
+    closingPeekRows.set(slot, row);
+    slot.style.flexBasis = initial.basis;
+    shelf.scrollTo({ left: initial.scrollLeft, behavior: 'smooth' });
+    row.cleanup = setTimeout(() => {
+      if (closingPeekRows.get(slot) !== row) return;
+      closingPeekRows.delete(slot);
+      card.style.height = initial.height;
+      card.classList.remove('peeking');
+      if (peekRow?.shelf !== shelf && ![...closingPeekRows.values()].some((r) => r.shelf === shelf)) shelf.style.scrollSnapType = initial.snap;
+      Object.assign(slot.querySelector('.rank')?.style || {}, { flexBasis: initial.rankBasis, marginRight: initial.rankMargin });
+    }, 550);
+  }
+  if (peek.hidden || !peek.classList.contains('open')) return;
+  peek.classList.remove('open');
+  clearTimeout(peekHide);
+  peekHide = setTimeout(() => (peek.hidden = true), 160);
+}
+
+function openPeek(a) {
+  const i = peekItems.get(a.getAttribute('href'));
+  const card = a.matches('.card') ? a : a.querySelector('.card');
+  if (!i || !card || !document.body.contains(a)) return;
+  clearTimeout(peekHide);
+  let r = card.getBoundingClientRect();
+  let w = Math.min(r.height * 16 / 9, innerWidth - 32);
+  let left = Math.max(16, Math.min(r.left, innerWidth - 16 - w)); // fallback: keep the preview on screen
+  const slot = a.closest('.shelf > *');
+  if (slot) {
+    // Rows: widen the poster's slot so the next ones slide aside, and bring the row along if it would spill off.
+    const shelf = slot.parentElement;
+    const previous = closingPeekRows.get(slot);
+    if (previous) {
+      clearTimeout(previous.cleanup);
+      closingPeekRows.delete(slot);
+    }
+    const returning = [...closingPeekRows.values()].find((r) => r.shelf === shelf);
+    const rank = slot.querySelector('.rank');
+    const initial = previous?.initial || {
+      basis: slot.style.flexBasis, height: card.style.height,
+      scrollLeft: returning?.initial.scrollLeft ?? shelf.scrollLeft,
+      snap: returning?.initial.snap ?? shelf.style.scrollSnapType,
+      rankBasis: rank?.style.flexBasis || '', rankMargin: rank?.style.marginRight || '',
+    };
+    const h = card.offsetHeight, cw = card.offsetWidth; // layout size, without the hover zoom
+    w = Math.round(h * 16 / 9);
+    const x = r.left + (r.width - cw) / 2, y = r.top + (r.height - h) / 2;
+    peekRow = { slot, card, shelf, initial };
+    // Top 10: its column is a % of the slot, keep it as is while the slot widens.
+    if (rank) Object.assign(rank.style, { flexBasis: `${rank.offsetWidth}px`, marginRight: getComputedStyle(rank).marginRight });
+    card.style.height = `${h}px`;
+    card.classList.add('peeking');
+    shelf.style.scrollSnapType = 'none';
+    const fromWidth = slot.offsetWidth, toWidth = fromWidth + w - cw;
+    slot.style.flexBasis = `${toWidth}px`;
+    const sr = shelf.getBoundingClientRect();
+    const over = Math.max(0, x + w - (sr.right - parseFloat(getComputedStyle(shelf).paddingRight)));
+    if (over) {
+      const row = peekRow, fromScroll = shelf.scrollLeft;
+      // Match scrolling to the actual expansion, so its right edge never runs away from the pointer.
+      const reveal = () => {
+        if (peekRow !== row || !slot.isConnected) return;
+        const progress = Math.max(0, Math.min(1, (slot.offsetWidth - fromWidth) / (toWidth - fromWidth)));
+        shelf.scrollLeft = fromScroll + over * progress;
+        followPeekCard();
+        if (progress < 1) row.revealFrame = requestAnimationFrame(reveal);
+      };
+      row.revealFrame = requestAnimationFrame(reveal);
+    }
+    r = { left: x, right: x + cw, top: y, width: cw, height: h };
+    left = x;
+  } else if (a.matches('.card') && a.parentElement.matches('.grid')) {
+    // Keep the grid tracks fixed: only this row slides, just like a shelf.
+    const grid = a.parentElement, gr = grid.getBoundingClientRect();
+    const style = getComputedStyle(grid);
+    const start = gr.left + parseFloat(style.paddingLeft);
+    const end = gr.right - parseFloat(style.paddingRight);
+    const cw = card.offsetWidth, h = card.offsetHeight;
+    const x = gr.left + a.offsetLeft, y = gr.top + a.offsetTop;
+    w = Math.min(Math.round(h * 16 / 9), end - start, innerWidth - 32);
+    const over = Math.max(0, Math.min(x - start, x + w - end));
+    const members = [...grid.children].filter((el) => el.offsetTop === a.offsetTop).map((slot) => {
+      const previous = closingPeekGridCards.get(slot);
+      if (previous) {
+        clearTimeout(previous.cleanup);
+        closingPeekGridCards.delete(slot);
+      }
+      const initial = previous?.initial || { translate: slot.style.translate, height: slot.style.height, peeking: slot.classList.contains('peeking') };
+      slot.style.translate = `${(slot.offsetLeft > a.offsetLeft ? w - cw : 0) - over}px 0`;
+      return { slot, initial };
+    });
+    card.style.height = `${h}px`;
+    card.classList.add('peeking');
+    const row = peekGrid = { members };
+    const follow = () => {
+      if (peekGrid !== row || !a.isConnected) return;
+      followPeekCard();
+      if (performance.now() - row.started < 550) row.revealFrame = requestAnimationFrame(follow);
+    };
+    row.started = performance.now();
+    row.revealFrame = requestAnimationFrame(follow);
+    // Start at the poster; followPeekCard tracks its animated sideways movement.
+    const currentLeft = card.getBoundingClientRect().left;
+    r = { left: currentLeft, right: currentLeft + cw, top: y, width: cw, height: h };
+    left = currentLeft;
+  }
+  const wide = peekArt(i);
+  const titled = !i.discover && !i.still && !!i.thumb; // a Jellyfin thumb already shows the title
+  const facts = [i.year, ...(i.genres || []).slice(0, 2)].filter(Boolean).join(' • ');
+  peek.innerHTML = `${wide ? `<img class="peek-wide" src="${wide}" alt="">` : ''}<img class="peek-poster" src="${i.poster}" alt="">
+    <div class="peek-info">
+      ${titled ? '' : i.logo ? `<img class="peek-logo" src="${i.logo}" alt="${esc(i.title)}">` : `<strong class="peek-title">${esc(i.title)}</strong>`}
+      <div class="peek-actions">${i.discover
+        ? `<a class="btn" href="${i.href}">${icon.info}Plus d'infos</a>`
+        : `<a class="btn" href="#/lecture/${i.key}">${icon.play}${i.progress ? 'Reprendre' : 'Lecture'}</a><a class="round" href="${i.href}" aria-label="Plus d'infos sur ${esc(i.title)}" title="Plus d'infos">${icon.info}</a>`}</div>
+      <div class="peek-meta">${i.requested ? '<span class="chip-inline">Demandé</span>' : ''}${i.rating ? `<span class="badge">${esc(i.rating)}</span>` : ''}<span>${esc(facts)}</span></div>
+      ${i.summary ? `<p>${esc(i.summary)}</p>` : ''}
+    </div>`;
+  peek.classList.remove('has-art');
+  peek.classList.toggle('compact', r.height < 240);
+  const info = peek.querySelector('.peek-info');
+  const current = () => peekCard === a && peek.querySelector('.peek-info') === info;
+  let shownArt = -1;
+  const showArt = (src, version) => loadPeekImage(src, 'high').then((image) => {
+    if (!image || !current() || version < shownArt) return;
+    shownArt = version;
+    let bg = peek.querySelector('.peek-wide');
+    if (!bg) {
+      bg = Object.assign(new Image(), { className: 'peek-wide', alt: '' });
+      peek.prepend(bg);
+    }
+    bg.src = src;
+    peek.classList.add('has-art');
+  });
+  showArt(wide, 0);
+  // Keep the poster until its replacement is decoded; late responses must belong to this opening.
+  artFor(i)?.then(({ logo, art }) => {
+    if (!current()) return;
+    if (art) showArt(art, 1);
+    if (logo) loadPeekImage(logo, 'high').then((image) => {
+      if (image && current()) peek.querySelector('.peek-title')?.replaceWith(Object.assign(new Image(), { className: 'peek-logo', src: logo, alt: i.title }));
+    });
+  });
+  peek.onclick = (e) => { if (!e.target.closest('a')) location.hash = i.href; closePeek(); };
+  // Full size from the start, clipped to the (already zoomed) poster, then the clip opens up.
+  const fromL = r.left - left, fromR = left + w - r.right;
+  Object.assign(peek.querySelector('.peek-poster').style, { left: `${fromL}px`, width: `${r.width}px` });
+  Object.assign(peek.style, { top: `${r.top}px`, left: `${left}px`, width: `${w}px`, height: `${r.height}px`, clipPath: `inset(0 ${fromR}px 0 ${fromL}px round var(--radius))` });
+  peek.hidden = false;
+  peek.getBoundingClientRect();
+  peek.classList.add('open');
+  peek.style.clipPath = 'inset(0 round var(--radius))';
+}
+
+function peekAnchor(target) {
+  const a = target?.closest('a.card, a.t10');
+  return a?.closest('.poster, .large, .discover, .top10') ? a : null;
+}
+
+function followPeekCard() {
+  if (!peekCard?.isConnected) return false;
+  const card = peekCard.matches('.card') ? peekCard : peekCard.querySelector('.card');
+  if (!card) return false;
+  const r = card.getBoundingClientRect();
+  const left = peekRow || peekGrid ? r.left : Math.max(16, Math.min(r.left, innerWidth - 16 - parseFloat(peek.style.width)));
+  Object.assign(peek.style, { top: `${r.top}px`, left: `${left}px` });
+  const target = peekPointer && document.elementFromPoint(peekPointer.x, peekPointer.y);
+  // The poster is still a valid hover target while the landscape panel is revealing it.
+  return !!target && (peek.contains(target) || peekCard.contains(target));
+}
+
+function trackPeekPointer(e) {
+  if (!canPeek.matches || e.pointerType !== 'mouse') return;
+  peekPointer = { x: e.clientX, y: e.clientY };
+  if (peek.contains(e.target)) return;
+  const a = peekAnchor(e.target);
+  if (a === peekCard) return;
+  closePeek();
+  if (!a) return;
+  peekCard = a;
+  warmPeek(peekItems.get(a.getAttribute('href')), 'high');
+  peekTimer = setTimeout(() => peekCard === a && openPeek(a), 450);
+}
+
+addEventListener('pointerover', trackPeekPointer);
+addEventListener('pointermove', trackPeekPointer);
+addEventListener('pointerout', (e) => {
+  if (e.relatedTarget) return;
+  peekPointer = null;
+  closePeek();
+});
+peek.addEventListener('pointerleave', (e) => !peekCard?.contains(e.relatedTarget) && closePeek());
+// Follow the card while scrolling; keep the same panel as long as the pointer remains over it.
+addEventListener('scroll', (e) => {
+  if (peek.classList.contains('open') && followPeekCard()) return;
+  closePeek();
+  if (!canPeek.matches || !peekPointer) return;
+  // Scroll may arrive after pointerover. Recheck the card once it settles, even if the mouse stays still.
+  peekTimer = setTimeout(() => {
+    if (!peekPointer) return;
+    const a = peekAnchor(document.elementFromPoint(peekPointer.x, peekPointer.y));
+    if (!a) return;
+    peekCard = a;
+    warmPeek(peekItems.get(a.getAttribute('href')), 'high');
+    openPeek(a);
+  }, 450);
+}, { capture: true, passive: true });
+addEventListener('hashchange', closePeek);
+addEventListener('resize', closePeek);
+
+const icon = {
+  info: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>',
+  play: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 4v16l14-8z"/></svg>',
+  check: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>',
+  plus: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
+  trailer: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m10 9 5 3-5 3z" fill="currentColor"/></svg>',
+};
+
+// One page for both: Jellyfin titles and TMDB discoveries, both can be marked watched.
+async function renderDetail(api) {
+  const pageHash = location.hash;
+  $view.innerHTML = `<div class="state">Chargement…</div>`;
+  let d;
+  try {
+    const res = await fetch(api);
+    if (!res.ok) throw new Error((await res.json()).error);
+    d = await res.json();
+  } catch (e) {
+    if (location.hash !== pageHash) return;
+    $view.innerHTML = `<div class="state">Titre introuvable.<br><small>${esc(e.message)}</small><br><br><a class="btn" href="#/">Retour</a></div>`;
+    return;
+  }
+  if (location.hash !== pageHash) return;
+  if (d.owned) return location.replace(`#/titre/${d.owned}`); // a "discovery" you already have
+  const show = d.type === 'show';
+  const app = show ? 'Sonarr' : 'Radarr';
+  const tmdbId = d.tmdbId || d.tmdb;
+  const addLabel = d.requested ? 'Déjà demandé' : d.canAdd ? `Ajouter à ${app}` : `${app} non configuré`;
+  const realSeasons = show ? d.seasons.filter((x) => x.index > 0).length : 0;
+  const facts = [show ? d.years : d.year, show ? (realSeasons ? `${realSeasons} saison${realSeasons > 1 ? 's' : ''}` : '') : d.minutes && fmt(d.minutes), d.genres.join(', ')].filter(Boolean).join(' • ');
+  // Play button: resume the movie, or the series' next episode.
+  const resume = show ? d.next : d.progress ? { progress: d.progress, remaining: d.remaining } : null;
+  const started = resume?.progress;
+  const playLabel = `${started ? 'Continuer' : 'Lecture'}${show && d.next && d.next.label !== 'S1:É1' ? ` ${d.next.label}` : ''}`;
+  const tabs = [show && ['episodes', 'Épisodes'], d.suggestions.length && ['suggestions', 'Suggestions'], d.canCheckReleases && ['versions', 'Versions'], ['details', 'Détails']].filter(Boolean);
+  const dl = (rows) => `<dl>${rows.filter(([, v]) => v && v.length).map(([k, v]) => `<dt>${k} :</dt>${[].concat(v).map((x) => `<dd>${esc(x)}</dd>`).join('')}`).join('')}</dl>`;
+
+  $view.innerHTML = `<article class="detail">
+    <div class="detail-bg">${d.art ? `<img src="${d.art}" alt="" fetchpriority="high">` : ''}</div>
+    <div class="detail-head">
+      ${d.logo ? `<img class="detail-logo" src="${d.logo}" alt="${esc(d.title)}">` : ''}<h1 ${d.logo ? 'class="sr-only"' : ''}>${esc(d.title)}</h1>
+      <div class="meta">${d.rating ? `<span class="badge">${esc(d.rating)}</span>` : ''}<span>${esc(facts)}</span></div>
+      ${d.summary ? `<p class="detail-sum">${esc(d.summary)}</p>` : ''}
+      ${started ? `<div class="detail-progress"><span class="bar"><i style="width:${Math.round(started * 100)}%"></i></span><span>${show ? `${esc(d.next.label)} · ` : ''}${resume.remaining ? `Il reste ${fmt(resume.remaining)}` : ''}</span></div>` : ''}
+      <div class="detail-actions">
+        ${!d.discover
+          ? `<a class="btn play-btn" href="#/lecture/${d.key}">${icon.play}${esc(playLabel)}</a>`
+          : d.requested ? '' : `<button class="btn play-btn" data-act="add" ${d.canAdd ? '' : 'disabled'}>${icon.plus}${esc(addLabel)}</button>`}
+        <button class="watched-btn" data-act="watched" aria-pressed="${!!d.watched}" title="${d.watched ? 'Retirer le statut vu' : 'Marquer comme vu'}">${icon.check}<span>J’ai vu</span></button>
+        ${d.trailer ? `<a class="round" href="${esc(d.trailer)}" target="_blank" rel="noopener noreferrer" aria-label="Bande-annonce (nouvel onglet)" title="Bande-annonce">${icon.trailer}</a>` : ''}
+      </div>
+      ${d.discover ? '<p class="detail-msg acq-msg" role="status"></p>' : ''}
+      ${tmdbId && (d.canAdd || !d.discover) ? `<div class="acq" hidden>
+        <div class="acq-line"><strong class="acq-label" role="status"></strong><span class="acq-pct"></span></div>
+        <div class="bar" aria-hidden="true"><i></i></div>
+        <progress class="sr-only" max="100" aria-label="Progression du téléchargement"></progress>
+        <div class="acq-meta"></div>
+        <p class="acq-note"></p>
+        <ul class="acq-issues" aria-label="Cause du blocage"></ul>
+        <button class="watched-btn" data-act="repair" aria-controls="acq-repair" aria-expanded="false" hidden>Résoudre le blocage</button>
+        <div class="acq-repair" id="acq-repair" hidden><p class="acq-repair-intro"></p><p class="acq-repair-msg" role="status" aria-live="polite"></p><form hidden></form></div>
+      </div>` : ''}
+      <p class="detail-msg watched-msg" role="status" aria-live="polite"></p>
+    </div>
+    <div class="tabs" role="tablist">${tabs.map(([k, t], n) => `<button role="tab" id="tab-${k}" aria-controls="panel-${k}" aria-selected="${!n}" tabindex="${n ? -1 : 0}">${t}</button>`).join('')}</div>
+    ${show ? `<section class="panel" id="panel-episodes" role="tabpanel" aria-labelledby="tab-episodes">
+      ${d.seasons.length > 1 ? `<select class="season-select" aria-label="Saison">${d.seasons.map((x) => `<option value="${x.id}" ${x.id === d.season ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select>` : ''}
+      <div class="grid episodes"></div>
+    </section>` : ''}
+    <section class="panel" id="panel-suggestions" role="tabpanel" aria-labelledby="tab-suggestions" ${show || !d.suggestions.length ? 'hidden' : ''}>
+      <div class="grid ${d.discover ? 'discover' : 'tiles'}">${d.suggestions.map((i) => card(i, d.discover ? 'discover' : 'tile')).join('')}</div>
+    </section>
+    ${d.canCheckReleases ? `<section class="panel" id="panel-versions" role="tabpanel" aria-labelledby="tab-versions" hidden>
+      <div class="versions" aria-busy="false">
+        <div class="versions-head">
+          <div><h3>Versions sur tes indexeurs</h3><p class="versions-status" role="status" aria-live="polite">Interroge tes indexeurs pour voir les versions de ce film. Rien n’est téléchargé tant que tu n’en choisis pas une.${d.discover && !d.requested ? ' S’il n’est pas encore dans Radarr, il y sera ajouté, sans surveillance.' : ''}</p></div>
+          <button class="watched-btn" data-act="releases"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg><span>Rechercher</span></button>
+        </div>
+        <div class="chips" role="group" aria-label="Filtrer les versions" hidden>
+          <button data-filter="accepted" aria-pressed="true">Compatibles<span>0</span></button>
+          <button data-filter="all" aria-pressed="false">Toutes<span>0</span></button>
+        </div>
+        <ul class="versions-notes" hidden></ul>
+        <ul class="version-list" aria-label="Versions trouvées"></ul>
+        <button class="watched-btn versions-more" hidden></button>
+        <p class="versions-msg" role="status" aria-live="polite"></p>
+        <p class="versions-foot"></p>
+      </div>
+    </section>` : ''}
+    <section class="panel" id="panel-details" role="tabpanel" aria-labelledby="tab-details" ${tabs[0][0] === 'details' ? '' : 'hidden'}>
+      <div class="facts">
+        <div><h3>${esc(d.title)}</h3><p>${esc(d.summary || 'Pas de résumé.')}</p></div>
+        ${dl([
+          [show ? 'Diffusion' : 'Durée', show ? d.years : d.minutes && fmt(d.minutes)],
+          ['Date de sortie', d.date && new Date(d.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })],
+          ['Genre', d.genres.join(', ')],
+          ['Classification', d.rating],
+          ['Studio', d.studios.slice(0, 2).join(', ')],
+        ])}
+        ${dl([[show ? 'Création' : 'Réalisation', d.directors], ['Scénario', d.writers.slice(0, 3)], ['Distribution', d.cast]])}
+      </div>
+    </section>
+  </article>`;
+  observePeekCards();
+
+  // Tabs: click or arrow keys.
+  const tabBtns = [...$view.querySelectorAll('[role=tab]')];
+  const select = (b) => tabBtns.forEach((t) => {
+    const on = t === b;
+    t.setAttribute('aria-selected', on);
+    t.tabIndex = on ? 0 : -1;
+    document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
+  });
+  tabBtns.forEach((b, k) => {
+    b.onclick = () => select(b);
+    b.onkeydown = (e) => {
+      const to = { ArrowRight: k + 1, ArrowLeft: k - 1 }[e.key];
+      if (to == null) return;
+      const t = tabBtns[(to + tabBtns.length) % tabBtns.length];
+      select(t);
+      t.focus();
+    };
+  });
+
+  // ---- Downloads (Radarr/Sonarr) and versions on the indexers (Radarr) ----
+  const add = $view.querySelector('[data-act=add]');
+  const acq = $view.querySelector('.acq');
+  const kind = d.kind || (show ? 'tv' : 'movie');
+  const JSON_POST = { method: 'POST', headers: { 'Content-Type': 'application/json' } };
+  const live = new Set();
+  let stopped = false, busy = false, timer, lastStatus;
+  // Every request of this page is aborted when you leave it.
+  const call = (url, opts = {}) => {
+    const c = new AbortController();
+    live.add(c);
+    return fetch(url, { ...opts, signal: c.signal }).finally(() => live.delete(c));
+  };
+  leaveDownloads = () => { stopped = true; clearTimeout(timer); live.forEach((c) => c.abort()); };
+  const bytes = (n) => (n >= 1024 ** 3 ? `${(n / 1024 ** 3).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} Go` : `${(n / 1024 ** 2).toLocaleString('fr-FR', { maximumFractionDigits: 0 })} Mo`);
+  const rate = (n) => {
+    const [unit, div] = [['Go/s', 1024 ** 3], ['Mo/s', 1024 ** 2], ['Ko/s', 1024]].find(([, v]) => n >= v) || ['o/s', 1];
+    return `${(n / div).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} ${unit}`;
+  };
+
+  const ACTIVE = ['queued', 'downloading', 'paused', 'importing', 'blocked'];
+  const LABELS = { waiting: 'Recherche d’une source', queued: 'En file d’attente', downloading: 'Téléchargement en cours', paused: 'Téléchargement en pause', importing: 'Ajout à la médiathèque', blocked: 'Intervention requise', ready: show ? 'Épisodes téléchargés' : 'Téléchargement terminé', unavailable: 'Suivi indisponible' };
+  const repairBtn = acq?.querySelector('[data-act=repair]');
+  const repairBox = acq?.querySelector('.acq-repair');
+  let repairBusy = false;
+  const syncRepair = () => {
+    if (!repairBtn) return;
+    const s = lastStatus || {};
+    repairBtn.hidden = !s.canRepair && !s.repair?.pending;
+    repairBtn.disabled = repairBusy || !!s.repair?.pending;
+    repairBtn.textContent = repairBusy ? 'Analyse…' : s.repair?.pending ? 'Import en cours…' : 'Résoudre le blocage';
+    if (s.state === 'ready') repairBox.hidden = true;
+    if (s.repair?.failed) {
+      repairBox.hidden = false;
+      repairBox.querySelector('.acq-repair-msg').textContent = `L’import a échoué dans ${app}. Relance l’analyse pour voir ce qui bloque.`;
+    }
+    repairBtn.setAttribute('aria-expanded', String(!repairBox.hidden));
+  };
+  const showStatus = (s) => {
+    lastStatus = s;
+    // A title already in Jellyfin only shows this while something is actually happening.
+    if (!d.discover && !ACTIVE.includes(s.state) && !s.repair?.pending) return (acq.hidden = true);
+    acq.hidden = false;
+    acq.dataset.state = s.state;
+    const pct = s.state === 'ready' ? 100 : s.progress == null ? null : Math.floor(s.progress * 100);
+    // An unknown size must never look like 0 % or 100 %.
+    acq.dataset.indeterminate = String(pct == null && s.state !== 'unavailable');
+    acq.querySelector('.acq-label').textContent = LABELS[s.state] || '';
+    acq.querySelector('.acq-pct').textContent = pct == null ? '' : `${pct} %`;
+    acq.querySelector('.bar i').style.setProperty('--p', (pct ?? 0) / 100);
+    const progress = acq.querySelector('progress');
+    if (pct == null) progress.removeAttribute('value');
+    else progress.value = pct;
+    let eta = '';
+    if (s.eta) {
+      const m = Math.max(1, Math.ceil((s.eta - Date.now()) / 60_000));
+      eta = `encore ≈ ${m >= 60 ? `${Math.floor(m / 60)} h ${m % 60} min` : `${m} min`}`;
+    }
+    const speed = Number.isFinite(s.speed) && s.speed >= 0 ? `${s.speedSource === 'estimated' ? '≈ ' : ''}${rate(s.speed)}` : '';
+    acq.querySelector('.acq-meta').textContent = [s.size > 0 && s.progress != null ? `${bytes(s.size - s.remaining)} sur ${bytes(s.size)}` : '', speed, eta].filter(Boolean).join(' · ');
+    const NOTES = {
+      waiting: 'Le téléchargement démarrera dès qu’une source sera trouvée.',
+      queued: 'Le téléchargement va bientôt démarrer.',
+      paused: 'La progression reprendra avec le téléchargement.',
+      importing: 'Encore un instant avant de le retrouver dans Jellyfin.',
+      blocked: show ? 'Sonarr attend une vérification avant d’ajouter les épisodes à la médiathèque.' : 'Radarr attend une vérification avant d’ajouter le fichier à la médiathèque.',
+      ready: show ? `${s.files} épisode${s.files > 1 ? 's' : ''} récupéré${s.files > 1 ? 's' : ''}.` : 'Il apparaîtra dans ta médiathèque après l’analyse de Jellyfin.',
+      unavailable: `${app} ne répond pas. Nouvel essai dans quelques secondes.`,
+    };
+    acq.querySelector('.acq-note').textContent = [s.count > 1 ? `${s.count} téléchargements` : '', NOTES[s.state]].filter(Boolean).join(' · ');
+    // Radarr says "Manual Import required", Sonarr "matched to series by ID": both mean the file needs a check.
+    const explain = (m) => (/manual import required|matched to (movie|series) by id/i.test(m)
+      ? (show ? 'Sonarr a reconnu la série mais demande de vérifier les fichiers avant de les importer.' : 'Radarr a reconnu le film mais demande de vérifier le fichier avant de l’importer.') : m);
+    acq.querySelector('.acq-issues').innerHTML = s.state === 'blocked' ? [...new Set((s.issues || []).map(explain))].map((m) => `<li>${esc(m)}</li>`).join('') : '';
+    syncRepair();
+  };
+  const poll = async () => {
+    clearTimeout(timer);
+    if (!acq || stopped) return;
+    try {
+      if (!document.hidden) {
+        const res = await call(`/api/downloads/${kind}/${tmdbId}`, { cache: 'no-store' });
+        if (!res.ok) throw new Error('unavailable');
+        const s = await res.json();
+        if (stopped) return;
+        showStatus(s);
+        if (!d.discover && !ACTIVE.includes(s.state) && !s.repair?.pending) return; // nothing going on: stop watching
+      }
+    } catch (e) {
+      if (stopped || e.name === 'AbortError') return;
+      if (!d.discover && !lastStatus) return; // library title, download service unreachable: stay quiet
+      showStatus({ state: 'unavailable' });
+    }
+    timer = setTimeout(poll, 5000);
+  };
+  if (acq && (d.requested || !d.discover)) poll();
+
+  if (repairBtn) repairBtn.onclick = async () => {
+    const intro = repairBox.querySelector('.acq-repair-intro');
+    const msg = repairBox.querySelector('.acq-repair-msg');
+    const form = repairBox.querySelector('form');
+    repairBusy = true;
+    repairBox.hidden = false;
+    intro.textContent = '';
+    msg.textContent = 'Analyse des fichiers téléchargés…';
+    form.hidden = true;
+    syncRepair();
+    try {
+      const res = await call(`/api/downloads/${kind}/${tmdbId}/repair`, { ...JSON_POST, body: '{}' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Analyse impossible.');
+      if (stopped) return;
+      const ok = data.files.filter((f) => f.selection);
+      // A season pack holds several episodes: they can all go in one import.
+      const many = data.single === false;
+      const submitLabel = (n) => (n > 1 ? `Importer ces ${n} fichiers` : 'Importer ce fichier');
+      intro.textContent = data.message;
+      msg.textContent = !data.files.length ? `Aucun fichier à importer. Corrige le dossier ou les permissions dans ${app}, puis relance l’analyse.`
+        : !ok.length ? `${app} refuse ces fichiers pour les raisons indiquées. Corrige-les dans ${app}, puis relance l’analyse.` : '';
+      form.innerHTML = data.files.length ? `<fieldset><legend>${many ? 'Fichiers à importer' : 'Fichier à importer'}</legend>${data.files.map((f) => `<label class="pick">
+          <input type="${many ? 'checkbox' : 'radio'}" name="selection" value="${esc(f.selection || '')}" ${!f.selection ? 'disabled' : many ? 'checked' : `required ${ok.length === 1 ? 'checked' : ''}`}>
+          <span>${f.episode ? `${esc(f.episode)}<small>${esc(f.name)}</small>` : esc(f.name)}<small>${[f.size > 0 ? bytes(f.size) : '', f.quality, f.languages.join(', ')].filter(Boolean).map(esc).join(' · ')}</small>${f.rejections.length ? `<small class="warn">${f.rejections.map(esc).join(' · ')}</small>` : ''}</span>
+        </label>`).join('')}</fieldset><button class="btn" type="submit" style="margin-top:14px" ${ok.length ? '' : 'disabled'}>${submitLabel(many ? ok.length : 1)}</button>` : '';
+      form.hidden = !data.files.length;
+      form.onchange = () => {
+        if (!many) return;
+        const n = form.querySelectorAll('input:checked').length;
+        const submit = form.querySelector('button');
+        submit.disabled = !n;
+        submit.textContent = submitLabel(n || 1);
+      };
+      form.onsubmit = async (e) => {
+        e.preventDefault();
+        const picked = [...form.querySelectorAll('input:checked')].map((i) => i.value);
+        if (!picked.length || repairBusy) return;
+        repairBusy = true;
+        form.querySelector('fieldset').disabled = form.querySelector('button').disabled = true;
+        msg.textContent = `Envoi de l’import à ${app}…`;
+        syncRepair();
+        try {
+          const r = await call(`/api/downloads/${kind}/${tmdbId}/import`, { ...JSON_POST, body: JSON.stringify({ selection: many ? picked : picked[0] }) });
+          const result = await r.json();
+          if (!r.ok) throw new Error(result.error || 'Import impossible.');
+          if (stopped) return;
+          lastStatus.repair = result;
+          form.hidden = true;
+          msg.textContent = 'Import lancé : le suivi se met à jour dès que le fichier est dans la médiathèque.';
+          poll();
+        } catch (err) {
+          if (stopped || err.name === 'AbortError') return;
+          msg.textContent = err.message;
+          form.querySelector('fieldset').disabled = form.querySelector('button').disabled = false;
+        } finally {
+          repairBusy = false;
+          if (!stopped) syncRepair();
+        }
+      };
+    } catch (e) {
+      if (!stopped && e.name !== 'AbortError') msg.textContent = e.message;
+    } finally {
+      repairBusy = false;
+      if (!stopped) syncRepair();
+    }
+  };
+
+  if (add) add.onclick = async () => {
+    if (busy) return;
+    const msg = $view.querySelector('.acq-msg');
+    busy = add.disabled = true;
+    add.lastChild.textContent = 'Envoi…';
+    msg.textContent = '';
+    const res = await call('/api/request', { ...JSON_POST, body: JSON.stringify({ kind: d.kind, tmdbId: d.tmdbId }) }).catch(() => null);
+    busy = false;
+    if (stopped) return;
+    if (res?.ok) {
+      d.requested = true;
+      add.remove();
+      if (acq) { showStatus({ state: 'waiting' }); poll(); } else msg.textContent = `Ajouté à ${app}.`;
+    } else {
+      add.disabled = false;
+      add.lastChild.textContent = addLabel;
+      msg.textContent = (await res?.json().catch(() => null))?.error || 'Échec de l’envoi. Réessaie.';
+    }
+  };
+
+  const vp = $view.querySelector('.versions');
+  if (vp) {
+    const search = vp.querySelector('[data-act=releases]');
+    const status = vp.querySelector('.versions-status');
+    const chips = vp.querySelector('.chips');
+    const notes = vp.querySelector('.versions-notes');
+    const list = vp.querySelector('.version-list');
+    const more = vp.querySelector('.versions-more');
+    const msg = vp.querySelector('.versions-msg');
+    const foot = vp.querySelector('.versions-foot');
+    const LANG = { French: 'Français', English: 'Anglais', German: 'Allemand', Italian: 'Italien', Spanish: 'Espagnol', Japanese: 'Japonais', Unknown: 'Langue inconnue' };
+    const plural = (n, word) => `${n} ${word}${n > 1 ? 's' : ''}`;
+    // Radarr's quality can omit the resolution (BR-DISK…): the release name usually has it.
+    const format = (r) => {
+      const t = `${r.quality} ${r.title}`;
+      return /2160p|\b4k\b|\buhd\b/i.test(t) ? '4K' : /1080[pi]/i.test(t) ? '1080p' : /720p/i.test(t) ? '720p' : /576p|480p|\bdvd|sdtv/i.test(t) ? 'SD' : '';
+    };
+    let data, filter = 'accepted', limit = 30, sending = null;
+    const draw = () => {
+      const rows = data.items.filter((r) => filter === 'all' || r.accepted);
+      const best = data.items.find((r) => r.accepted);
+      list.innerHTML = rows.slice(0, limit).map((r) => `<li class="version">
+        ${format(r) ? `<span class="badge version-res">${format(r)}</span>` : '<span></span>'}
+        <div>
+          <div class="version-q">${esc(r.quality)}${r === best ? '<span class="version-best">Premier choix de Radarr</span>' : ''}</div>
+          <div class="version-meta">${esc([r.languages.map((l) => LANG[l] || l).join(', ') || 'Langue inconnue', r.indexer, r.seeders == null ? '' : plural(r.seeders, 'source')].filter(Boolean).join(' · '))}</div>
+          <div class="version-name" title="${esc(r.title)}">${esc(r.title)}</div>
+        </div>
+        <div class="version-side">
+          <span class="version-size">${r.size == null ? '—' : bytes(r.size)}</span>
+          ${r.selection ? `<button class="watched-btn" data-selection="${esc(r.selection)}" ${sending ? 'disabled' : ''}>${sending === r.selection ? 'Envoi…' : r.queueAlternative ? 'Télécharger l’alternative' : 'Télécharger'}</button>`
+            : r.sent ? `<span class="version-state ok">${icon.check}Envoyée</span>` : `<span class="version-state">${r.accepted ? 'Compatible' : 'Non retenue'}</span>`}
+        </div>
+        ${!r.accepted ? `<details class="version-why"><summary>${r.queueAlternative ? 'Une version est déjà en file' : 'Pourquoi Radarr l’écarte'}</summary><ul>${(r.rejections.length ? r.rejections : ['Radarr ne peut pas récupérer cette version pour le moment.']).map((x) => `<li>${esc(x.startsWith('Quality for release in queue already meets cutoff:') ? 'La version déjà en file atteint la qualité demandée. Tu peux quand même télécharger celle-ci.' : x)}</li>`).join('')}</ul></details>` : ''}
+      </li>`).join('');
+      more.hidden = rows.length <= limit;
+      more.textContent = `Afficher plus (${rows.length - limit})`;
+      chips.querySelectorAll('[data-filter]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.filter === filter)));
+    };
+    const check = async () => {
+      if (busy) return;
+      busy = search.disabled = true;
+      search.querySelector('span').textContent = 'Recherche…';
+      vp.setAttribute('aria-busy', 'true');
+      status.textContent = 'Tes indexeurs sont interrogés. Cela peut prendre une à deux minutes.';
+      chips.hidden = notes.hidden = more.hidden = true;
+      msg.textContent = foot.textContent = '';
+      list.innerHTML = '<li class="version version-skel" aria-hidden="true"><i class="skeleton"></i><i class="skeleton"></i><i class="skeleton"></i></li>'.repeat(3);
+      try {
+        const res = await call(`/api/releases/movie/${tmdbId}`, { ...JSON_POST, body: '{}' });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || 'Recherche indisponible. Réessaie.');
+        if (stopped) return;
+        data = json;
+        filter = data.accepted ? 'accepted' : 'all';
+        limit = 30;
+        const profile = data.profile ? ` (profil ${data.profile})` : '';
+        status.textContent = !data.total ? 'Aucune version trouvée pour le moment. Un résultat vide ne garantit pas que le film est introuvable.'
+          : data.accepted ? `${plural(data.accepted, 'version')} compatible${data.accepted > 1 ? 's' : ''} sur ${data.total} trouvée${data.total > 1 ? 's' : ''}${profile}.`
+          : data.alternatives ? `${plural(data.alternatives, 'alternative')} sur ${data.total} version${data.total > 1 ? 's' : ''} trouvée${data.total > 1 ? 's' : ''}${profile} : Radarr en a déjà une en file.`
+          : `Aucune version compatible sur les ${data.total} trouvées${profile}. Chaque version indique pourquoi Radarr l’écarte.`;
+        notes.innerHTML = data.warnings.map((w) => `<li>${esc(w)}</li>`).join('');
+        notes.hidden = !data.warnings.length;
+        chips.querySelector('[data-filter=accepted] span').textContent = data.accepted;
+        chips.querySelector('[data-filter=accepted]').disabled = !data.accepted;
+        chips.querySelector('[data-filter=all] span').textContent = data.total;
+        chips.hidden = !data.total;
+        draw();
+        foot.textContent = `Vérifié à ${new Date(data.checkedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}.`;
+      } catch (e) {
+        if (stopped || e.name === 'AbortError') return;
+        status.textContent = e.message;
+        list.innerHTML = '';
+        data = null;
+      } finally {
+        busy = false;
+        if (!stopped) {
+          search.disabled = false;
+          search.querySelector('span').textContent = data ? 'Relancer' : 'Rechercher';
+          vp.setAttribute('aria-busy', 'false');
+        }
+      }
+    };
+    search.onclick = check;
+    chips.onclick = (e) => {
+      const b = e.target.closest('[data-filter]');
+      if (!b || b.disabled || !data) return;
+      filter = b.dataset.filter;
+      limit = 30;
+      draw();
+    };
+    more.onclick = () => { limit += 30; draw(); };
+    list.onclick = async (e) => {
+      const b = e.target.closest('[data-selection]');
+      if (!b || busy || !data) return;
+      const item = data.items.find((r) => r.selection === b.dataset.selection);
+      if (!item) return;
+      busy = search.disabled = true;
+      if (add) add.disabled = true;
+      sending = item.selection;
+      msg.textContent = '';
+      draw();
+      try {
+        const res = await call(`/api/releases/movie/${tmdbId}/download`, { ...JSON_POST, body: JSON.stringify({ selection: sending }) });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || 'Impossible de télécharger cette version.');
+        if (stopped) return;
+        item.sent = true;
+        item.selection = null;
+        d.requested = true;
+        add?.remove();
+        msg.textContent = `${result.message} ${result.title}${result.warning ? ` · ${result.warning}` : ''}`;
+        if (acq) { if (!ACTIVE.includes(lastStatus?.state)) showStatus({ state: 'queued' }); poll(); }
+      } catch (err) {
+        if (!stopped && err.name !== 'AbortError') msg.textContent = err.message;
+      } finally {
+        busy = false;
+        sending = null;
+        if (!stopped) {
+          search.disabled = false;
+          if (add?.isConnected) add.disabled = !d.canAdd;
+          draw();
+        }
+      }
+    };
+  }
+
+  const watched = $view.querySelector('[data-act=watched]');
+  if (watched) watched.onclick = async () => {
+    const on = watched.getAttribute('aria-pressed') !== 'true';
+    const msg = watched.closest('.detail-head').querySelector('.watched-msg');
+    msg.textContent = '';
+    watched.disabled = true;
+    const identity = d.discover ? { kind: d.kind, tmdbId: d.tmdbId } : { id: d.key };
+    const res = await fetch('/api/watched', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...identity, watched: on }) }).catch(() => null);
+    watched.disabled = false;
+    if (res?.ok) {
+      d.watched = on;
+      watched.setAttribute('aria-pressed', on);
+      watched.title = on ? 'Retirer le statut vu' : 'Marquer comme vu';
+      msg.textContent = on ? 'Marqué comme vu.' : 'Statut vu retiré.';
+    } else {
+      msg.textContent = (await res?.json().catch(() => null))?.error || 'Impossible d’enregistrer le statut vu. Réessaie.';
+    }
+  };
+
+  if (!show) return;
+  const grid = $view.querySelector('.grid.episodes');
+  const seasons = new Map();
+  const load = async (seasonId) => {
+    if (!seasonId) return (grid.innerHTML = '<p class="state">Aucun épisode.</p>');
+    grid.innerHTML = '';
+    const url = d.discover ? `/api/discover/season/${d.tmdbId}/${seasonId}` : `/api/episodes/${d.key}/${seasonId}`;
+    if (!seasons.has(seasonId)) seasons.set(seasonId, fetch(url).then((r) => r.json()));
+    const eps = await seasons.get(seasonId);
+    grid.innerHTML = eps.map((e) => {
+      const name = `${e.index != null ? `${e.index}. ` : ''}${e.name}`;
+      const pic = e.still ? `<img src="${e.still}" alt="" loading="lazy">` : `<span class="fallback">${esc(name)}</span>`;
+      return `<div>
+        ${d.discover ? `<div class="card static">${pic}</div>` : `<a class="card" href="#/lecture/${e.id}" aria-label="Lire ${esc(name)}">${pic}
+          <span class="play"><svg width="44" height="44" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="20" fill="#fff"/><path d="M15 12v16l13-8z" fill="#0b1020"/></svg></span>
+          ${e.progress ? `<span class="progress"><i style="width:${Math.round(e.progress * 100)}%"></i></span>` : ''}
+        </a>`}
+        <div class="cw-meta"><div class="t">${esc(name)}</div>${e.summary ? `<p class="ep-sum">${esc(e.summary)}</p>` : ''}${e.minutes ? `<div class="left">(${e.minutes} min)</div>` : ''}</div>
+      </div>`;
+    }).join('') || '<p class="state">Aucun épisode.</p>';
+  };
+  $view.querySelector('.season-select')?.addEventListener('change', (e) => load(e.target.value));
+  load(d.season);
+}
+
+const LISTS = [['foryou', 'Pour toi'], ['trending', 'Tendances'], ['popular', 'Populaires'], ['top', 'Cultes'], ['new', 'Nouveautés'], ['upcoming', 'À venir']];
+const KINDS = [['all', 'Tout'], ['movie', 'Films'], ['tv', 'Séries']];
+const genreLists = {};
+
+function renderDiscover(query) {
+  const p = new URLSearchParams(query);
+  const st = {
+    kind: KINDS.some(([k]) => k === p.get('kind')) ? p.get('kind') : 'all',
+    // No list = the streaming-style home (banner + rows); a list = its full grid ("Voir tout").
+    list: LISTS.some(([k]) => k === p.get('list')) ? p.get('list') : '',
+    genre: /^\d+$/.test(p.get('genre') || '') ? p.get('genre') : '',
+    q: (p.get('q') || '').slice(0, 100),
+  };
+  $view.innerHTML = `<div class="filters">
+      <div class="seg" role="group" aria-label="Type">${KINDS.map(([k, t]) => `<button data-kind="${k}">${t}</button>`).join('')}</div>
+      <select class="season-select" aria-label="Genre" hidden><option value="">Tous les genres</option></select>
+      <label class="search-pill">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4.8-4.8"/></svg>
+        <input type="search" placeholder="Film ou série" aria-label="Rechercher un film ou une série à découvrir" autocomplete="off" value="${esc(st.q)}">
+        <button class="clear" type="button" aria-label="Effacer la recherche" ${st.q ? '' : 'hidden'}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      </label>
+    </div>
+    <div class="filters" data-grid-head hidden>
+      <a class="back-link" href="#/decouvrir">Découvrir</a>
+      <div class="chips" role="group" aria-label="Liste">${LISTS.map(([k, t]) => `<button data-list="${k}">${t}</button>`).join('')}</div>
+    </div>
+    <div class="rows-area"></div>
+    <div class="grid discover" aria-live="polite" hidden></div>
+    <p class="state" hidden></p>
+    <div class="more"></div>`;
+  const input = $view.querySelector('input');
+  const clear = $view.querySelector('.clear');
+  const head = $view.querySelector('[data-grid-head]');
+  const rowsArea = $view.querySelector('.rows-area');
+  const grid = $view.querySelector('.grid');
+  const note = $view.querySelector('.state');
+  const genre = $view.querySelector('select');
+  const sentinel = $view.querySelector('.more');
+  let page = 0, more = true, busy = false, run = 0;
+  const shown = new Set(); // TMDB pages overlap when its ranking shifts between two requests
+  const gridMode = () => !!(st.q || st.list);
+
+  const sync = async () => {
+    // Keep the filters in the address so "back" from a title lands on the same view.
+    const qs = new URLSearchParams(Object.entries(st).filter(([k, v]) => v && !(k === 'kind' && v === 'all')));
+    history.replaceState(null, '', `#/decouvrir${qs.size ? `?${qs}` : ''}`);
+    $view.querySelectorAll('[data-kind]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.kind === st.kind));
+    $view.querySelectorAll('[data-list]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.list === st.list));
+    head.hidden = !st.list || !!st.q;
+    head.querySelector('.back-link').href = `#/decouvrir${st.kind !== 'all' ? `?kind=${st.kind}${st.genre ? `&genre=${st.genre}` : ''}` : ''}`;
+    clear.hidden = !st.q;
+    rowsArea.hidden = gridMode();
+    grid.hidden = !gridMode();
+    genre.hidden = st.kind === 'all' || !!st.q;
+    if (!genre.hidden) {
+      genreLists[st.kind] ??= fetch(`/api/discover/genres/${st.kind}`).then((r) => r.json()).catch(() => []);
+      const list = await genreLists[st.kind];
+      genre.innerHTML = `<option value="">Tous les genres</option>${list.map((g) => `<option value="${g.id}">${esc(g.name)}</option>`).join('')}`;
+      genre.value = st.genre;
+    }
+  };
+  const loadRows = async () => {
+    const mine = run;
+    rowsArea.innerHTML = `<div class="hero"><div class="hero-track"><div class="slide active skeleton"></div></div></div>`;
+    const qs = new URLSearchParams({ ...(st.kind !== 'all' && { kind: st.kind }), ...(st.genre && { genre: st.genre }) });
+    try {
+      const res = await fetch(`/api/discover/rows?${qs}`);
+      const data = await res.json();
+      if (mine !== run) return;
+      if (!res.ok) throw new Error(data.error);
+      clearInterval(heroTimer);
+      rowsArea.innerHTML = hero(data.hero) + data.rows.map(row).join('');
+      wire();
+    } catch (e) {
+      if (mine === run) rowsArea.innerHTML = `<p class="state">${esc(e.message || 'TMDB ne répond pas.')}</p>`;
+    }
+  };
+  const load = async () => {
+    if (!gridMode() || busy || !more || !document.body.contains(grid)) return;
+    busy = true;
+    const mine = run;
+    const qs = new URLSearchParams({ kind: st.kind, list: st.list || 'trending', page: page + 1, ...(st.genre && { genre: st.genre }), ...(st.q && { q: st.q }) });
+    try {
+      const res = await fetch(`/api/discover/browse?${qs}`);
+      const data = await res.json();
+      if (mine !== run) return; // filters changed meanwhile
+      if (!res.ok) throw new Error(data.error);
+      page++;
+      more = data.more;
+      const fresh = data.items.filter((i) => !shown.has(i.key) && shown.add(i.key));
+      grid.insertAdjacentHTML('beforeend', fresh.map((i) => card(i, 'discover')).join(''));
+      observePeekCards();
+      note.hidden = !!grid.children.length || more;
+      note.textContent = st.q ? `Aucun résultat pour « ${st.q} ».`
+        : st.list === 'foryou' ? "Pas encore de suggestions de l'IA ici. Lance-les depuis Réglages, elles arrivent en une minute environ."
+        : 'Rien à découvrir ici : tu as déjà tout !';
+    } catch (e) {
+      more = false;
+      note.hidden = false;
+      note.textContent = e.message || 'TMDB ne répond pas.';
+    } finally {
+      if (mine === run) busy = false;
+    }
+    // A page made only of titles you own can come back empty: keep going while the bottom is in view.
+    if (mine === run && more && sentinel.getBoundingClientRect().top < innerHeight + 600) load();
+  };
+  const reset = () => {
+    run++;
+    page = 0; more = true; busy = false;
+    shown.clear();
+    grid.innerHTML = '';
+    note.hidden = true;
+    sync();
+    if (gridMode()) load();
+    else loadRows();
+  };
+  $view.querySelector('.seg').onclick = (e) => {
+    const b = e.target.closest('[data-kind]');
+    if (!b || st.kind === b.dataset.kind) return;
+    st.kind = b.dataset.kind;
+    st.genre = '';
+    reset();
+  };
+  head.querySelector('.chips').onclick = (e) => {
+    const b = e.target.closest('[data-list]');
+    if (!b || st.list === b.dataset.list) return;
+    st.list = b.dataset.list;
+    reset();
+  };
+  genre.onchange = () => { st.genre = genre.value; reset(); };
+  let t;
+  input.oninput = () => {
+    clearTimeout(t);
+    clear.hidden = !input.value;
+    t = setTimeout(() => { st.q = input.value.trim(); reset(); }, 300);
+  };
+  clear.onclick = (e) => { e.preventDefault(); input.value = ''; st.q = ''; reset(); input.focus(); };
+  new IntersectionObserver((entries) => entries[0].isIntersecting && load(), { rootMargin: '600px' }).observe(sentinel);
+  reset();
+}
+
+function renderSearch() {
+  $view.innerHTML = `<div class="search-box">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4.8-4.8"/></svg>
+      <input type="search" placeholder="Titre ou genre" aria-label="Rechercher un titre ou un genre" autocomplete="off">
+      <button class="clear" aria-label="Effacer la recherche" hidden><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </div>
+    <div class="results" aria-live="polite"></div>`;
+  const input = $view.querySelector('input');
+  const clear = $view.querySelector('.clear');
+  const results = $view.querySelector('.results');
+  let aiOn = false;
+  fetch('/api/settings').then((r) => r.json()).then((s) => {
+    aiOn = s.ai;
+    if (aiOn) input.placeholder = 'Titre, genre… ou une envie';
+  }).catch(() => {});
+  const askButton = (q) => `<button class="ask" data-ask><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.2 6.8L21 9l-6.8 2.2L12 18l-2.2-6.8L3 9l6.8-2.2zM19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9z"/></svg>
+    <span>Demander à Nimbus : « ${esc(q)} »<small>Des idées dans ta médiathèque et des titres à découvrir (Entrée)</small></span></button>`;
+
+  // A sentence for the AI goes to the Nimbus page, which asks right away.
+  const ask = () => {
+    const q = input.value.trim();
+    if (q && aiOn) location.hash = `#/nimbus?q=${encodeURIComponent(q)}`;
+  };
+
+  // Empty box: titled rows, then genre tiles that run a genre search (Disney+'s "Parcourir").
+  let explore;
+  const showExplore = async () => {
+    explore ??= fetch('/api/explore').then((r) => r.json());
+    const { rows, genres } = await explore;
+    if (input.value.trim()) return;
+    const tiles = genres.map((g) => `<button class="card genre" data-q="${esc(g.name)}">${g.art ? `<img src="${g.art}" alt="" loading="lazy">` : ''}<span>${esc(g.name)}</span></button>`).join('');
+    results.innerHTML = rows.map(row).join('') + (genres.length ? row({ title: 'Parcourir par genre', style: 'wide', html: tiles }) : '');
+    wire();
+  };
+  let t;
+  const run = () => {
+    clearTimeout(t);
+    clear.hidden = !input.value;
+    t = setTimeout(async () => {
+      const q = input.value.trim();
+      if (!q) return showExplore();
+      const qs = encodeURIComponent(q);
+      const [items, more] = await Promise.all([
+        fetch(`/api/search?q=${qs}`).then((r) => r.json()),
+        fetch(`/api/discover?q=${qs}`).then((r) => (r.ok ? r.json() : [])).catch(() => []),
+      ]);
+      if (q !== input.value.trim()) return; // a newer search is on its way
+      results.innerHTML = (aiOn ? askButton(q) : '') + ((items.length ? `<div class="grid wide">${items.map((i) => card(i, 'wide')).join('')}</div>` : '')
+        + (more.length ? `<h3 class="grid-title">À découvrir<small>Pas dans ta médiathèque : ouvre un titre pour l'envoyer vers Radarr ou Sonarr</small></h3>
+          <div class="grid discover">${more.map((i) => card(i, 'discover')).join('')}</div>` : '')
+        || `<p class="state">Aucun résultat pour « ${esc(q)} ».</p>`);
+      observePeekCards();
+    }, 200);
+  };
+  input.oninput = run;
+  input.onkeydown = (e) => { if (e.key === 'Enter') ask(); }; // braces: an on* handler returning false blocks the key
+  clear.onclick = () => { input.value = ''; run(); input.focus(); };
+  results.onclick = (e) => {
+    if (e.target.closest('[data-ask]')) return ask();
+    const g = e.target.closest('[data-q]');
+    if (!g) return;
+    input.value = g.dataset.q;
+    run();
+    scrollTo(0, 0);
+  };
+  showExplore();
+  input.focus();
+}
+
+// Nimbus page: a session of questions to the AI. The turns live here, so leaving and coming back keeps them.
+const nimbus = { turns: [], art: null };
+const NB_IDEAS = ['Un film qui fait peur, mais pas trop', 'Une série courte à finir ce week-end', 'Quelque chose de drôle à voir en famille', 'Un grand classique que je n\'ai pas vu'];
+const NB_THINKING = ['Nimbus cherche des idées…', 'Il compare les ambiances…', 'Il vérifie les titres à découvrir…', 'Encore un instant…'];
+
+function renderNimbus(query) {
+  const first = (new URLSearchParams(query).get('q') || '').trim().slice(0, 300);
+  if (query) history.replaceState(null, '', '#/nimbus'); // a reload must not ask again
+  $view.innerHTML = `<div class="nb" data-state="${nimbus.turns.length || first ? 'chat' : 'idle'}">
+      <div class="nb-wall" aria-hidden="true"></div>
+      <div class="nb-hello">
+        <h1>Qu'est-ce qui te ferait envie ce soir ?</h1>
+        <p>Décris une humeur, une soirée, un film que tu aimes. Nimbus te propose des titres de ta médiathèque et d’autres à découvrir.</p>
+      </div>
+      <button class="nb-new glass" type="button">Nouvelle session</button>
+      <div class="nb-thread" aria-live="polite"></div>
+      <form class="nb-composer glass">
+        <textarea rows="1" maxlength="300" placeholder="Un film qui fait peur, mais pas trop…" aria-label="Ta demande à Nimbus"></textarea>
+        <button class="nb-send" type="submit" aria-label="Envoyer à Nimbus" disabled><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5m-6 6 6-6 6 6"/></svg></button>
+      </form>
+      <div class="nb-ideas">${NB_IDEAS.map((i) => `<button class="glass" type="button">${esc(i)}</button>`).join('')}</div>
+    </div>`;
+  const root = $view.querySelector('.nb');
+  const wall = root.querySelector('.nb-wall');
+  const thread = root.querySelector('.nb-thread');
+  const form = root.querySelector('form');
+  const ta = form.querySelector('textarea');
+  const sendBtn = form.querySelector('.nb-send');
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const pending = () => nimbus.turns.some((t) => t.pending);
+
+  // Three lanes of posters, each repeated three times so the drift loops without a seam.
+  nimbus.art ??= fetch('/api/art').then((r) => r.json()).catch(() => []);
+  nimbus.art.then((list) => {
+    if (!list.length || !root.isConnected) return;
+    wall.innerHTML = [0, 1, 2].map((n) => {
+      const lane = list.filter((_, k) => k % 3 === n);
+      return `<div class="nb-lane"><div>${[...lane, ...lane, ...lane].map((src) => `<img src="${src}" alt="">`).join('')}</div></div>`;
+    }).join('');
+    requestAnimationFrame(() => wall.classList.add('ready'));
+  });
+
+  const sync = () => {
+    sendBtn.disabled = !ta.value.trim() || pending();
+    root.classList.toggle('busy', pending());
+  };
+  // The composer glides between the middle of the page and the bottom dock (View Transitions, where supported).
+  const swap = (fn) => (document.startViewTransition && !reduced ? document.startViewTransition(fn) : fn());
+
+  const answer = (t) => {
+    if (t.pending) return `<div class="nb-think" role="status"><span class="nb-orb glass"></span><span class="nb-status">${NB_THINKING[0]}</span></div>`;
+    if (t.error) return `<p class="nb-error">${esc(t.error)}<button class="nb-retry" type="button" data-retry>Réessayer</button></p>`;
+    const cards = t.items.map((i, n) => card(i, 'wide', undefined, true).replace('<div>', `<div style="--i:${n}">`)).join('');
+    return (t.intro ? `<p class="nb-intro">${esc(t.intro)}</p>` : '')
+      + (t.notice ? `<p class="nb-notice">${esc(t.notice)}</p>` : '')
+      + (cards ? `<div class="grid wide nb-results">${cards}</div>` : t.intro ? '' : `<p class="nb-intro">Aucun titre ne correspond assez bien à « ${esc(t.q)} ».</p>`);
+  };
+  const mount = (t, fresh) => {
+    thread.insertAdjacentHTML('beforeend', `<section class="nb-turn${fresh ? ' fresh' : ''}"><p class="nb-q glass">${esc(t.q)}</p><div class="nb-a">${answer(t)}</div></section>`);
+    t.el = thread.lastElementChild;
+  };
+  const settle = (t) => {
+    if (!t.el?.isConnected) return; // the page was left; it shows the answer when it comes back
+    const think = t.el.querySelector('.nb-think');
+    const show = () => { t.el.classList.add('fresh'); t.el.querySelector('.nb-a').innerHTML = answer(t); sync(); };
+    if (think && !reduced) { think.classList.add('leaving'); setTimeout(show, 280); } else show();
+  };
+  const run = async (t) => {
+    t.pending = true;
+    t.error = null;
+    sync();
+    try {
+      const res = await fetch('/api/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ q: t.q, before: t.before }) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      Object.assign(t, data);
+    } catch (e) {
+      t.error = e.message || 'Nimbus ne répond pas.';
+    }
+    t.pending = false;
+    settle(t);
+  };
+  const send = (q) => {
+    q = q.trim();
+    if (!q || pending()) return;
+    const t = { q, before: nimbus.turns.filter((x) => !x.error).map((x) => x.q).slice(-4) };
+    beat = 0; // the waiting lines start over for each question
+    nimbus.turns.push(t);
+    t.pending = true;
+    swap(() => { root.dataset.state = 'chat'; mount(t, true); });
+    ta.value = '';
+    run(t);
+    requestAnimationFrame(() => t.el.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' }));
+  };
+
+  nimbus.turns.forEach((t) => mount(t, false));
+  sync();
+  // The waiting line changes every few seconds so a long search still feels alive.
+  let beat = 0;
+  const pulse = setInterval(() => {
+    if (!root.isConnected) return clearInterval(pulse);
+    beat++;
+    root.querySelectorAll('.nb-status').forEach((s) => {
+      s.textContent = NB_THINKING[Math.min(beat, NB_THINKING.length - 1)];
+      s.classList.remove('tick');
+      void s.offsetWidth; // restart the animation
+      s.classList.add('tick');
+    });
+  }, 3200);
+
+  ta.oninput = sync;
+  ta.onkeydown = (e) => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); form.requestSubmit(); } };
+  form.onsubmit = (e) => { e.preventDefault(); send(ta.value); };
+  root.querySelector('.nb-ideas').onclick = (e) => { const b = e.target.closest('button'); if (b) send(b.textContent); };
+  root.querySelector('.nb-new').onclick = () => {
+    if (pending()) return;
+    nimbus.turns = [];
+    swap(() => { root.dataset.state = 'idle'; thread.innerHTML = ''; });
+    ta.focus();
+  };
+  thread.onclick = (e) => {
+    if (!e.target.closest('[data-retry]')) return;
+    const t = nimbus.turns.find((x) => x.el === e.target.closest('.nb-turn'));
+    if (!t || pending()) return;
+    t.pending = true;
+    t.el.querySelector('.nb-a').innerHTML = answer(t);
+    run(t);
+  };
+  if (first) send(first);
+  else ta.focus();
+}
+
+const AI_TASKS = [
+  ['ask', 'Demande à Nimbus', 'Répond à tes envies sur la page Nimbus. Un modèle rapide suffit.'],
+  ['recommend', 'Suggestions du jour', "Tourne une fois par jour, en arrière-plan : un modèle plus lent mais meilleur fait l'affaire."],
+];
+const EFFORT_NAMES = { none: 'Désactivée (la plus rapide)', minimal: 'Minimale', low: 'Faible', medium: 'Moyenne', high: 'Élevée (la plus lente)', xhigh: 'Maximale' };
+// Options of the Réflexion list: the levels the server says it accepts, after the model's own default.
+const effortOptions = (efforts, byDefault, chosen) => [['', `Celle du modèle${byDefault ? ` (${(EFFORT_NAMES[byDefault] || byDefault).split(' (')[0].toLowerCase()})` : ''}`],
+  ...[...new Set([...efforts, ...(chosen ? [chosen] : [])])].map((e) => [e, EFFORT_NAMES[e] || e])]
+  .map(([v, t]) => `<option value="${esc(v)}"${v === chosen ? ' selected' : ''}>${esc(t)}</option>`).join('');
+
+async function renderSettings() {
+  $view.innerHTML = `<div class="settings"><h1>Réglages</h1>
+    <section aria-labelledby="ai-title">
+      <h2 id="ai-title">Suggestions de l'IA</h2>
+      <p>Chaque jour, l'IA regarde ce que tu as vu récemment et choisit pour toi des titres de ta médiathèque
+        (rangée « Choisis pour toi » de l'accueil) et d'autres à découvrir (liste « Pour toi » de Découvrir), que tu peux envoyer vers Radarr ou Sonarr.</p>
+      <label><input type="checkbox" name="on"> Chaque jour à <input type="time" name="time" required aria-label="Heure des suggestions"></label>
+      <button class="btn" type="button" data-run>Lancer maintenant</button>
+      <p class="status" aria-live="polite"></p>
+    </section>
+    <form class="ai-config" aria-labelledby="cfg-title">
+      <section>
+        <h2 id="cfg-title">Serveurs d'IA</h2>
+        <p>N'importe quel serveur compatible OpenAI : llama.cpp, Ollama, LM Studio, OpenRouter… La route se termine en général par <code>/v1</code>.</p>
+        ${AI_TASKS.map(([k, name, hint]) => `<fieldset data-task="${k}">
+          <legend>${name}</legend>
+          <p>${hint}</p>
+          <div class="fields">
+            <label>Route de l'API<input type="url" name="url" placeholder="http://192.168.1.89:8080/v1" autocomplete="off" spellcheck="false"></label>
+            <label>Modèle<input name="model" list="models-${k}" autocomplete="off" spellcheck="false"><datalist id="models-${k}"></datalist></label>
+            <label>Clé d'API<input type="password" name="key" autocomplete="off" placeholder="Aucune"></label>
+            <label>Réflexion<select name="effort">${effortOptions(['none', 'low', 'medium', 'high'], null, '')}</select></label>
+          </div>
+          <p class="hint" aria-live="polite"></p>
+        </fieldset>`).join('')}
+        <button class="btn" type="submit">Enregistrer</button>
+        <p class="status" aria-live="polite"></p>
+      </section>
+    </form></div>`;
+  const on = $view.querySelector('[name=on]');
+  const time = $view.querySelector('[name=time]');
+  const btn = $view.querySelector('[data-run]');
+  const status = $view.querySelector('.status');
+  const form = $view.querySelector('.ai-config');
+  const saved = form.querySelector('.status');
+  const call = async (path, payload) => {
+    const res = await fetch(path, { method: payload ? 'POST' : 'GET', headers: { 'Content-Type': 'application/json' }, body: payload && JSON.stringify(payload) });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    return data;
+  };
+  const show = (s) => {
+    const ready = !!(s.tasks.recommend.url || s.defaults.url);
+    on.checked = s.on;
+    time.value = s.time;
+    on.disabled = time.disabled = btn.disabled = !ready || s.thinking;
+    btn.textContent = s.thinking ? "L'IA réfléchit…" : 'Lancer maintenant';
+    status.textContent = !ready ? "Renseigne d'abord la route du serveur d'IA plus bas."
+      : s.thinking ? "L'IA est en train de chercher, ça prend environ une minute."
+      : [s.on ? `Prochaine fois : ${when(s.next)}.` : 'Désactivé : coche la case pour un lancement chaque jour.',
+        !s.at ? 'Pas encore lancé.'
+        : `Dernière fois : ${when(s.at)}, ` + (s.error ? `échec : ${s.error}` : `${s.picks} titres choisis dans ta médiathèque, ${s.discover} à découvrir.`),
+      ].join(' ');
+  };
+  // "aujourd'hui à 04:00", "demain à 04:00", else the date.
+  const when = (t) => {
+    const d = new Date(t);
+    const day = Math.round((new Date(d).setHours(0, 0, 0, 0) - new Date().setHours(0, 0, 0, 0)) / 864e5);
+    const hour = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    return `${{ '-1': 'hier', 0: "aujourd'hui", 1: 'demain' }[day] ?? d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })} à ${hour}`;
+  };
+  // Models of a route, offered in the field's list; also tells right away if the route answers.
+  const models = async (box) => {
+    const hint = box.querySelector('.hint');
+    const url = box.querySelector('[name=url]').value.trim();
+    hint.textContent = 'Connexion au serveur…';
+    try {
+      const model = box.querySelector('[name=model]');
+      const effort = box.querySelector('[name=effort]');
+      const { models: list, current, efforts, defaultEffort } = await call('/api/ai/models', {
+        task: box.dataset.task, url, key: box.querySelector('[name=key]').value, model: model.value.trim(),
+      });
+      box.querySelector('datalist').innerHTML = list.map((m) => `<option value="${esc(m)}">`).join('');
+      if (!model.value && current) model.value = current; // pre-filled with what the server runs now
+      effort.innerHTML = effortOptions(efforts, defaultEffort, effort.value);
+      hint.textContent = list.length ? `Serveur joignable : ${list.length} modèle${list.length > 1 ? 's' : ''} proposé${list.length > 1 ? 's' : ''} dans le champ Modèle.` : 'Serveur joignable, mais il ne liste aucun modèle.';
+    } catch (e) {
+      hint.textContent = e.message;
+    }
+  };
+  const fill = (s) => {
+    for (const box of form.querySelectorAll('fieldset')) {
+      const t = s.tasks[box.dataset.task];
+      box.querySelector('[name=url]').value = t.url || s.defaults.url;
+      box.querySelector('[name=url]').placeholder = s.defaults.url || 'http://192.168.1.89:8080/v1';
+      box.querySelector('[name=model]').value = t.model || s.defaults.model;
+      box.querySelector('[name=model]').placeholder = s.defaults.model || 'Celui chargé sur le serveur';
+      box.querySelector('[name=key]').value = '';
+      box.querySelector('[name=key]').placeholder = t.hasKey ? 'Enregistrée (laisse vide pour la garder)' : 'Aucune';
+      const effort = box.querySelector('[name=effort]');
+      if (![...effort.options].some((o) => o.value === t.effort)) effort.add(new Option(EFFORT_NAMES[t.effort] || t.effort, t.effort));
+      effort.value = t.effort;
+    }
+  };
+
+  let s;
+  try {
+    s = await call('/api/settings');
+  } catch (e) {
+    status.textContent = e.message || 'Nimbus ne répond pas.';
+    return;
+  }
+  show(s);
+  fill(s);
+  form.querySelectorAll('fieldset').forEach((box) => {
+    models(box);
+    box.querySelector('[name=url]').onchange = () => models(box);
+    box.querySelector('[name=model]').onchange = () => models(box); // another model may accept other levels
+  });
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    const tasks = Object.fromEntries([...form.querySelectorAll('fieldset')].map((box) => [box.dataset.task, {
+      url: box.querySelector('[name=url]').value, model: box.querySelector('[name=model]').value,
+      key: box.querySelector('[name=key]').value, effort: box.querySelector('[name=effort]').value,
+    }]));
+    try {
+      const next = await call('/api/settings', { tasks });
+      fill(next);
+      show(next);
+      saved.textContent = 'Enregistré.';
+    } catch (err) {
+      saved.textContent = err.message;
+    }
+  };
+  const save = () => call('/api/settings', { on: on.checked, time: time.value })
+    .then((next) => { show(next); status.textContent = `Enregistré. ${status.textContent}`; })
+    .catch((e) => (status.textContent = e.message));
+  on.onchange = save;
+  time.onchange = () => time.value && save();
+  btn.onclick = async () => {
+    show({ ...(await call('/api/settings')), thinking: true });
+    try {
+      show(await call('/api/recommend', {}));
+    } catch (e) {
+      show(await call('/api/settings').catch(() => ({ ...s, error: e.message, at: Date.now() })));
+    }
+  };
+}
+
+route();
+</script>
+</body>
+</html>

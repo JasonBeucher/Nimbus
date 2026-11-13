@@ -1,0 +1,6 @@
+.env
+node_modules
+.posters.json
+.ai.json
+.watched.json
+.watched.json.tmp

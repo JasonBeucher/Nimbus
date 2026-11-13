@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "nimbus-test",
+      "runtimeExecutable": "env",
+      "runtimeArgs": ["PORT=3001", "node", "--env-file=.env", "server.js"],
+      "port": 3001
+    }
+  ]
+}
